@@ -1,0 +1,40 @@
+node_modules
+
+# Additional ignores for web app
+node_modules/
+__pycache__/
+*.pyc
+.Python
+env/
+venv/
+
+# Environment variables
+.env
+.env.local
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Testing
+coverage/
+.pytest_cache/
+htmlcov/
+
+# Docker
+.docker/
+
+# MongoDB
+data/
