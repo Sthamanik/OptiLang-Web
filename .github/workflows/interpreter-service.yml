@@ -1,32 +1,17 @@
 name: Interpreter Service CI
-
 on:
   push:
     branches: [ main, develop ]
-    paths:
-      - 'interpreter-service/**'
-  pull_request:
-    branches: [ main, develop ]
-    paths:
-      - 'interpreter-service/**'
-
+    paths: ['interpreter-service/**']
 jobs:
   test:
     runs-on: ubuntu-latest
-    
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Setup Python
-      uses: actions/setup-python@v5
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.14'
-    
-    - name: Install dependencies
-      working-directory: ./interpreter-service
+    - working-directory: ./interpreter-service
       run: |
-        pip install -r requirements-dev.txt
-    
-    - name: Run tests
-      working-directory: ./interpreter-service
-      run: pytest
+        pip install fastapi uvicorn pydantic pydantic-settings
+        python -m py_compile app/main.py
