@@ -48,7 +48,8 @@
       "@middlewares/*": ["./src/middlewares/*"],
       "@types/*": ["./src/types/*"],
       "@config/*": ["./src/config/*"],
-      "@utils/*": ["./src/utils/*"]
+      "@utils/*": ["./src/utils/*"],
+      "@validations/*": ["./src/validations/*"]
     }
   },
   "include": ["src/**/*"],

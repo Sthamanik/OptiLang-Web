@@ -42,6 +42,7 @@ const UserSchema = new Schema<IUser>(
         /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
         "Please provide a valid email address",
       ],
+      index: true,
     },
     refreshToken: {
       type: String,
@@ -52,8 +53,6 @@ const UserSchema = new Schema<IUser>(
     timestamps: true,
   }
 );
-
-UserSchema.index({ email: 1 }, { unique: true });
 
 // Hash password before saving 
 UserSchema.pre("save", async function (this: IUser) {

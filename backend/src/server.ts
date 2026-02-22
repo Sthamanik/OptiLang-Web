@@ -1,27 +1,32 @@
-import http from 'http';
-import app from './app.js';
-import { config } from '@config/env.js';
-import { connectDatabase } from '@config/database.js';
+import http from "http";
+import app from "./app.js";
+import { config } from "@config/env.js";
+import { connectDatabase } from "@config/database.js";
+import logger from "@utils/logger.util.js";
 
-const Port = config.port || 5001;
 const server = http.createServer(app);
 
-server.on("error", (err: any) => {
-  console.error("Server error:", err);
-  process.exit(1);
-})
+const start = async (): Promise<void> => {
+  await connectDatabase();
 
-connectDatabase()
-.then(() => {
-  server.on("error", (err) => {
-    console.error("Express server error: ", err);
-  })
+  server.listen(config.port, () => {
+    logger.info(
+      `Server running on port ${config.port} in ${config.nodeEnv} mode`
+    );
+  });
+};
 
-  server.listen(Port, ()=> {
-    console.log(`Server is running on port: ${Port} in ${config.nodeEnv} mode`);
-  })
-})
-.catch((err: any) => {
-  console.error("Failed to connect to the database: ", err);
+server.on("error", (err) => {
+  logger.error("Server error:", err);
   process.exit(1);
-})
+});
+
+process.on("SIGTERM", () => {
+  logger.info("SIGTERM received. Shutting down gracefully...");
+  server.close(() => process.exit(0));
+});
+
+start().catch((err) => {
+  logger.error("Failed to start server:", err);
+  process.exit(1);
+});
