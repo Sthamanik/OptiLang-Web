@@ -3,7 +3,7 @@ import app from './app.js';
 import { config } from '@config/env.js';
 import { connectDatabase } from '@config/database.js';
 
-const Port = config.port || 5000;
+const Port = config.port || 5001;
 const server = http.createServer(app);
 
 server.on("error", (err: any) => {

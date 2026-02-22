@@ -1,28 +1,37 @@
+import { Request, Response, NextFunction } from "express";
 import { ApiError } from "@utils/apiError.util.js";
-import { Request, Response, NextFunction } from 'express';
+import logger from "@utils/logger.util.js";
 
 const errorHandler = (
-  err: any,
-  _: Request,
+  err: unknown,
+  req: Request,
   res: Response,
   _next: NextFunction
-): Response | void => {
-  if ( err instanceof ApiError ){
-    return res.status(err.statusCode).json({
+): void => {
+  // Known operational error
+  if (err instanceof ApiError) {
+    logger.warn(`[${req.method}] ${req.originalUrl} → ${err.statusCode}: ${err.message}`);
+
+    res.status(err.statusCode).json({
+      success: false,
       statusCode: err.statusCode,
-      data: err.data,
-      success: err.success,
-      message: err.message || "Somthing went wrong",
-      errors: err.errors || []
-    })
+      message: err.message,
+      errors: err.errors,
+      data: null,
+    });
+    return;
   }
 
-  res.status(err.statusCode || 500).json({
+  // Unknown error — log full details, hide from client
+  logger.error(`[${req.method}] ${req.originalUrl} → Unhandled error:`, err);
+
+  res.status(500).json({
     success: false,
-    message: err.message || "Something went off",
-    error: err.message || "Something went wrong",
-    stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
-  })
-}
+    statusCode: 500,
+    message: "Internal server error",
+    errors: [],
+    data: null,
+  });
+};
 
 export default errorHandler;
