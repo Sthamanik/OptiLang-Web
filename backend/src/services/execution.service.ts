@@ -1,5 +1,5 @@
 import { executeCode, analyzeCode, ExecutionResult, AnalysisResult } from "@services/interpreterClient.service.js";
-import { Execution } from "@models/Execution.js";
+import { Execution } from "@/models/Execution.model.js";
 import { ApiError } from "@utils/apiError.util.js";
 import logger from "@utils/logger.util.js";
 import { CodeInput } from "@validations/execution.validation.js";

@@ -1,4 +1,4 @@
-import { Execution, IExecution } from "@models/Execution.js";
+import { Execution, IExecution } from "@/models/Execution.model.js";
 import { ApiError } from "@utils/apiError.util.js";
 import { HistoryQuery } from "@validations/execution.validation.js";
 

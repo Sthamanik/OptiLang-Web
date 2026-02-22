@@ -6,6 +6,11 @@ import { config } from "@config/env.js";
 import errorHandler from "@middlewares/errorHandler.middleware.js";
 import requestLogger from "@middlewares/requestLogger.middleware.js";
 
+// ── Import routes 
+import authRoutes from "@routes/auth.route.js";
+import executionRoutes from "@routes/execution.route.js";
+import historyRoutes from "@routes/history.route.js";
+
 const app: Application = express();
 
 // ── Security and CORS
@@ -29,6 +34,12 @@ app.get("/health", (_: Request, res: Response) => {
   });
 });
 
+
+// ── Routes 
+app.use("/api/auth", authRoutes);
+app.use("/api", executionRoutes);
+app.use("/api/history", historyRoutes);
+
 // ── 404
 app.use((req: Request, res: Response) => {
   res.status(404).json({
@@ -36,16 +47,6 @@ app.use((req: Request, res: Response) => {
     message: `Route ${req.originalUrl} not found`,
   });
 });
-
-// ── Import routes 
-import authRoutes from "@routes/auth.route.js";
-import executionRoutes from "@routes/execution.route.js";
-import historyRoutes from "@routes/history.route.js";
-
-// ── Routes 
-app.use("/api/auth", authRoutes);
-app.use("/api", executionRoutes);
-app.use("/api/history", historyRoutes);
 
 // ── Global error handler 
 app.use(errorHandler);
