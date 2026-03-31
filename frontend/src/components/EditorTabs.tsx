@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { X, Plus, Pencil, Check } from 'lucide-react'
+import { X, Plus } from 'lucide-react'
 import { useStore, type EditorTab } from '@/store/useStore'
 
 // ── Single tab ────────────────────────────────────────────────────────────────
