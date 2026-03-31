@@ -5,8 +5,8 @@ import { useStore, type EditorTab } from '@/store/useStore'
 // ── Single tab ────────────────────────────────────────────────────────────────
 function Tab({ tab, isActive }: { tab: EditorTab; isActive: boolean }) {
   const { switchTab, closeTab, renameTab, tabs } = useStore()
-  const [editing, setEditing]   = useState(false)
-  const [draft,   setDraft]     = useState(tab.name)
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(tab.name)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -53,7 +53,7 @@ function Tab({ tab, isActive }: { tab: EditorTab; isActive: boolean }) {
           value={draft}
           onChange={e => setDraft(e.target.value)}
           onKeyDown={e => {
-            if (e.key === 'Enter')  commit()
+            if (e.key === 'Enter') commit()
             if (e.key === 'Escape') cancel()
             e.stopPropagation()
           }}
