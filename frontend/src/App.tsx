@@ -168,7 +168,7 @@ export default function App() {
           <div className="editor-wrap">
             <CodeEditor
               value={code}
-              onChange={(v: unknown) => updateTabCode(activeTabId, v)}
+              onChange={(v) => updateTabCode(activeTabId, v)}
               lineStats={profiling?.line_stats ?? {}}
               suggestions={suggestions}
               errors={errors}
