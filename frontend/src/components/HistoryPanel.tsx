@@ -5,8 +5,8 @@ import { useStore, type HistoryEntry } from '@/store/useStore'
 function formatTime(iso: string): string {
   const date = new Date(iso)
   const diff = Math.floor((Date.now() - date.getTime()) / 1000)
-  if (diff < 60)    return `${diff}s ago`
-  if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`
+  if (diff < 60) return `${diff}s ago`
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
   return date.toLocaleDateString()
 }
@@ -83,13 +83,13 @@ function HistoryCard({ entry }: { entry: HistoryEntry }) {
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter')  commitRename()
+              if (e.key === 'Enter') commitRename()
               if (e.key === 'Escape') cancelRename()
             }}
             maxLength={60}
           />
-          <button className="hist-rename-btn ok"  onClick={commitRename}><Check size={12} /></button>
-          <button className="hist-rename-btn"      onClick={cancelRename}><X    size={12} /></button>
+          <button className="hist-rename-btn ok" onClick={commitRename}><Check size={12} /></button>
+          <button className="hist-rename-btn" onClick={cancelRename}><X size={12} /></button>
         </div>
       ) : (
         <p className="hist-name">{entry.name}</p>
@@ -148,7 +148,7 @@ export default function HistoryPanel() {
           </div>
         ) : (
           <div className="hist-list">
-            {history.map((entry) => (
+            {history.map((entry: any) => (
               <HistoryCard key={entry.id} entry={entry} />
             ))}
           </div>

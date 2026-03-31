@@ -5,17 +5,17 @@ import type { LineStats, Suggestion } from '@/types'
 
 // ── Register PyLite language once ────────────────────────────────────────────
 function registerPyLite(monaco: typeof Monaco) {
-  if (monaco.languages.getLanguages().some((l) => l.id === 'pylite')) return
+  if (monaco.languages.getLanguages().some((l: any) => l.id === 'pylite')) return
 
   monaco.languages.register({ id: 'pylite' })
 
   monaco.languages.setMonarchTokensProvider('pylite', {
     keywords: [
-      'if','elif','else','while','for','in','def','return',
-      'break','continue','pass','and','or','not',
-      'True','False','None','try','except','finally','lambda',
+      'if', 'elif', 'else', 'while', 'for', 'in', 'def', 'return',
+      'break', 'continue', 'pass', 'and', 'or', 'not',
+      'True', 'False', 'None', 'try', 'except', 'finally', 'lambda',
     ],
-    builtins: ['print','range','len','str','int','float','bool','list','dict'],
+    builtins: ['print', 'range', 'len', 'str', 'int', 'float', 'bool', 'list', 'dict'],
     tokenizer: {
       root: [
         [/#.*$/, 'comment'],
@@ -39,31 +39,31 @@ function registerPyLite(monaco: typeof Monaco) {
     base: 'vs-dark',
     inherit: true,
     rules: [
-      { token: 'keyword',    foreground: 'C792EA', fontStyle: 'bold' },
+      { token: 'keyword', foreground: 'C792EA', fontStyle: 'bold' },
       { token: 'predefined', foreground: '82AAFF' },
-      { token: 'string',     foreground: 'C3E88D' },
-      { token: 'number',     foreground: 'F78C6C' },
-      { token: 'comment',    foreground: '546E7A', fontStyle: 'italic' },
-      { token: 'operator',   foreground: '89DDFF' },
+      { token: 'string', foreground: 'C3E88D' },
+      { token: 'number', foreground: 'F78C6C' },
+      { token: 'comment', foreground: '546E7A', fontStyle: 'italic' },
+      { token: 'operator', foreground: '89DDFF' },
       { token: 'identifier', foreground: 'EEFFFF' },
     ],
     colors: {
-      'editor.background':              '#0d1117',
-      'editor.foreground':              '#EEFFFF',
-      'editorLineNumber.foreground':    '#3d444d',
+      'editor.background': '#0d1117',
+      'editor.foreground': '#EEFFFF',
+      'editorLineNumber.foreground': '#3d444d',
       'editorLineNumber.activeForeground': '#8b949e',
-      'editorCursor.foreground':        '#FFCB6B',
-      'editor.selectionBackground':     '#264f78',
+      'editorCursor.foreground': '#FFCB6B',
+      'editor.selectionBackground': '#264f78',
       'editor.lineHighlightBackground': '#161b22',
-      'editorGutter.background':        '#0d1117',
-      'editorWidget.background':        '#161b22',
+      'editorGutter.background': '#0d1117',
+      'editorWidget.background': '#161b22',
     },
   })
 }
 
 // ── Heat colour for a line ────────────────────────────────────────────────────
 function heatClass(avgMs: number): string {
-  if (avgMs > 5)  return 'profile-hot'
+  if (avgMs > 5) return 'profile-hot'
   if (avgMs > 0.5) return 'profile-warm'
   return 'profile-cold'
 }
@@ -85,9 +85,9 @@ export default function CodeEditor({
   suggestions,
   errors,
 }: CodeEditorProps) {
-  const editorRef  = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null)
-  const monacoRef  = useRef<typeof Monaco | null>(null)
-  const decorIds   = useRef<string[]>([])
+  const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null)
+  const monacoRef = useRef<typeof Monaco | null>(null)
+  const decorIds = useRef<string[]>([])
 
   const handleBeforeMount: BeforeMount = (monaco) => {
     monacoRef.current = monaco
@@ -155,9 +155,9 @@ export default function CodeEditor({
           ? monaco.MarkerSeverity.Warning
           : monaco.MarkerSeverity.Hint,
       startLineNumber: s.line,
-      endLineNumber:   s.line,
-      startColumn:     1,
-      endColumn:       model.getLineMaxColumn(s.line),
+      endLineNumber: s.line,
+      startColumn: 1,
+      endColumn: model.getLineMaxColumn(s.line),
       message: `[${s.pattern}] ${s.description}\n💡 ${s.suggestion}`,
       source: 'OptiLang',
     }))
@@ -168,13 +168,13 @@ export default function CodeEditor({
         const match = msg.match(/[Ll]ine\s+(\d+)/);
         const line = match ? Number(match[1]) : 1
         return {
-          severity:        monaco.MarkerSeverity.Error,
+          severity: monaco.MarkerSeverity.Error,
           startLineNumber: line,
-          endLineNumber:   line,
-          startColumn:     1,
-          endColumn:       model.getLineMaxColumn(line),
-          message:         msg,
-          source:          'OptiLang',
+          endLineNumber: line,
+          startColumn: 1,
+          endColumn: model.getLineMaxColumn(line),
+          message: msg,
+          source: 'OptiLang',
         }
       })
 
@@ -182,7 +182,7 @@ export default function CodeEditor({
   }, [suggestions, errors])
 
   useEffect(() => { applyDecorations() }, [applyDecorations])
-  useEffect(() => { applyMarkers()     }, [applyMarkers])
+  useEffect(() => { applyMarkers() }, [applyMarkers])
 
   return (
     <MonacoEditor
@@ -194,23 +194,23 @@ export default function CodeEditor({
       beforeMount={handleBeforeMount}
       onMount={handleMount}
       options={{
-        fontSize:             14,
-        fontFamily:           '"Fira Code", "Cascadia Code", "JetBrains Mono", monospace',
-        fontLigatures:        true,
-        lineNumbers:          'on',
-        glyphMargin:          true,
-        minimap:              { enabled: false },
+        fontSize: 14,
+        fontFamily: '"Fira Code", "Cascadia Code", "JetBrains Mono", monospace',
+        fontLigatures: true,
+        lineNumbers: 'on',
+        glyphMargin: true,
+        minimap: { enabled: false },
         scrollBeyondLastLine: false,
-        wordWrap:             'on',
-        automaticLayout:      true,
-        tabSize:              4,
-        insertSpaces:         true,
-        renderLineHighlight:  'all',
-        cursorBlinking:       'smooth',
-        smoothScrolling:      true,
-        padding:              { top: 12 },
+        wordWrap: 'on',
+        automaticLayout: true,
+        tabSize: 4,
+        insertSpaces: true,
+        renderLineHighlight: 'all',
+        cursorBlinking: 'smooth',
+        smoothScrolling: true,
+        padding: { top: 12 },
         scrollbar: {
-          verticalScrollbarSize:   6,
+          verticalScrollbarSize: 6,
           horizontalScrollbarSize: 6,
         },
       }}

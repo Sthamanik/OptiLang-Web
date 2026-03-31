@@ -1,12 +1,12 @@
 import { useCallback } from 'react'
 import { Play, Loader2, Zap, History } from 'lucide-react'
-import CodeEditor     from '@/components/CodeEditor'
-import EditorTabs     from '@/components/EditorTabs'
-import OutputPanel    from '@/components/OutputPanel'
+import CodeEditor from '@/components/CodeEditor'
+import EditorTabs from '@/components/EditorTabs'
+import OutputPanel from '@/components/OutputPanel'
 import ProfilingPanel from '@/components/ProfilingPanel'
-import ScorePanel     from '@/components/ScorePanel'
-import HistoryPanel   from '@/components/HistoryPanel'
-import NameModal      from '@/components/NameModal'
+import ScorePanel from '@/components/ScorePanel'
+import HistoryPanel from '@/components/HistoryPanel'
+import NameModal from '@/components/NameModal'
 import { executeCode } from '@/services/api'
 import { useStore, type HistoryEntry } from '@/store/useStore'
 import './App.css'
@@ -15,7 +15,7 @@ type Tab = 'output' | 'profiling' | 'score'
 
 export default function App() {
   const {
-    tabs, activeTabId, activeCode, updateTabCode,
+    activeTabId, activeCode, updateTabCode,
     enableProfiling, setEnableProfiling,
     timeout,
     isRunning, setIsRunning,
@@ -53,16 +53,16 @@ export default function App() {
       setResult(d)
 
       const entry: HistoryEntry = {
-        id:              `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        name:            runName,
-        code:            currentCode,
-        output:          d.output,
-        errors:          d.errors,
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        name: runName,
+        code: currentCode,
+        output: d.output,
+        errors: d.errors,
         executionTimeMs: d.execution_time_ms,
-        score:           d.score?.score           ?? null,
-        grade:           d.score?.grade           ?? null,
-        complexity:      d.score?.complexity_class ?? null,
-        timestamp:       new Date().toISOString(),
+        score: d.score?.score ?? null,
+        grade: d.score?.grade ?? null,
+        complexity: d.score?.complexity_class ?? null,
+        timestamp: new Date().toISOString(),
       }
       addToHistory(entry)
 
@@ -79,7 +79,7 @@ export default function App() {
       setIsRunning(false)
     }
   }, [enableProfiling, timeout, setIsRunning, clearResult,
-      setResult, setApiError, setActiveTab, addToHistory])
+    setResult, setApiError, setActiveTab, addToHistory])
 
   const handleRunClick = useCallback(() => {
     if (isRunning || !code.trim()) return
@@ -97,9 +97,9 @@ export default function App() {
   )
 
   const resultTabs: { id: Tab; label: string; count?: number; disabled?: boolean }[] = [
-    { id: 'output',    label: 'Output',    count: errors.length || undefined },
+    { id: 'output', label: 'Output', count: errors.length || undefined },
     { id: 'profiling', label: 'Profiling', disabled: !profiling },
-    { id: 'score',     label: 'Score',     disabled: !score },
+    { id: 'score', label: 'Score', disabled: !score },
   ]
 
   return (
@@ -107,7 +107,7 @@ export default function App() {
 
       <NameModal
         isOpen={nameModalOpen}
-        onConfirm={(name) => { closeNameModal(); runCode(name) }}
+        onConfirm={(name: string) => { closeNameModal(); runCode(name) }}
         onCancel={closeNameModal}
       />
 
@@ -168,7 +168,7 @@ export default function App() {
           <div className="editor-wrap">
             <CodeEditor
               value={code}
-              onChange={(v) => updateTabCode(activeTabId, v)}
+              onChange={(v: unknown) => updateTabCode(activeTabId, v)}
               lineStats={profiling?.line_stats ?? {}}
               suggestions={suggestions}
               errors={errors}
@@ -198,9 +198,9 @@ export default function App() {
           </div>
 
           <div className="tab-content">
-            {activeTab === 'output'    && <OutputPanel    output={output} errors={errors} executionTimeMs={executionTimeMs} isRunning={isRunning} />}
+            {activeTab === 'output' && <OutputPanel output={output} errors={errors} executionTimeMs={executionTimeMs} isRunning={isRunning} />}
             {activeTab === 'profiling' && <ProfilingPanel profiling={profiling} />}
-            {activeTab === 'score'     && <ScorePanel     score={score} suggestions={suggestions} />}
+            {activeTab === 'score' && <ScorePanel score={score} suggestions={suggestions} />}
           </div>
         </section>
 
