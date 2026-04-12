@@ -1,7 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.routes import execution_router, analysis_router, health_router
+from app.api.routes import (
+    analysis_router,
+    execution_router,
+    health_router,
+    language_router,
+    optimization_router,
+)
 import logging
 
 # Configure logging
@@ -23,7 +29,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
         version=settings.version,
-        description="Interpreter service for OptiLang - Execute and analyze PyLite code",
+        description="Interpreter service for OptiLang core execution, parsing, and analysis",
         debug=settings.debug,
         docs_url="/docs",
         redoc_url="/redoc",
@@ -43,6 +49,8 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(execution_router)
     app.include_router(analysis_router)
+    app.include_router(optimization_router)
+    app.include_router(language_router)
     
     @app.on_event("startup")
     async def startup_event():
