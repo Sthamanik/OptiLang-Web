@@ -1,11 +1,14 @@
 import { z } from "zod";
 
-export const codeSchema = z.object({
+export const sourceSchema = z.object({
   code: z
     .string()
     .nonempty("Code is required")
     .min(1, "Code cannot be empty")
     .max(10000, "Code cannot exceed 10,000 characters"),
+});
+
+export const codeSchema = sourceSchema.extend({
   timeout: z
     .number()
     .int()
@@ -13,6 +16,10 @@ export const codeSchema = z.object({
     .max(30, "Timeout cannot exceed 30 seconds")
     .optional()
     .default(5),
+  enable_profiling: z
+    .boolean()
+    .optional()
+    .default(true),
 });
 
 export const historyQuerySchema = z.object({
@@ -39,4 +46,5 @@ export const historyQuerySchema = z.object({
 });
 
 export type CodeInput = z.infer<typeof codeSchema>;
+export type SourceInput = z.infer<typeof sourceSchema>;
 export type HistoryQuery = z.infer<typeof historyQuerySchema>;

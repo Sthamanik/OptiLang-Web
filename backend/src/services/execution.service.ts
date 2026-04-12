@@ -1,8 +1,19 @@
-import { executeCode, analyzeCode, ExecutionResult, AnalysisResult } from "@services/interpreterClient.service.js";
+import {
+  analyzeCode,
+  AnalysisResult,
+  executeCode,
+  ExecutionResult,
+  optimizeCode,
+  OptimizationResult,
+  parseCode,
+  ParseResult,
+  tokenizeCode,
+  TokenizeResult,
+} from "@services/interpreterClient.service.js";
 import { Execution } from "@/models/Execution.model.js";
 import { ApiError } from "@utils/apiError.util.js";
 import logger from "@utils/logger.util.js";
-import { CodeInput } from "@validations/execution.validation.js";
+import { CodeInput, SourceInput } from "@validations/execution.validation.js";
 
 // ── Helpers 
 
@@ -53,9 +64,12 @@ export const runCode = async (
   input: CodeInput,
   userId: string
 ): Promise<ExecutionResult> => {
-  const result = await executeCode(input.code, userId, input.timeout).catch(
-    handleInterpreterError
-  );
+  const result = await executeCode(
+    input.code,
+    userId,
+    input.timeout,
+    input.enable_profiling
+  ).catch(handleInterpreterError);
 
   saveExecution(userId, input.code, result);
 
@@ -66,11 +80,42 @@ export const runAnalysis = async (
   input: CodeInput,
   userId: string
 ): Promise<AnalysisResult> => {
-  const result = await analyzeCode(input.code, userId).catch(
+  const result = await analyzeCode(
+    input.code,
+    userId,
+    input.timeout,
+    input.enable_profiling
+  ).catch(
     handleInterpreterError
   );
 
   saveExecution(userId, input.code, result);
 
   return result;
+};
+
+export const runOptimization = async (
+  input: CodeInput,
+  userId: string
+): Promise<OptimizationResult> => {
+  return optimizeCode(
+    input.code,
+    userId,
+    input.timeout,
+    input.enable_profiling
+  ).catch(handleInterpreterError);
+};
+
+export const runTokenize = async (
+  input: SourceInput,
+  userId: string
+): Promise<TokenizeResult> => {
+  return tokenizeCode(input.code, userId).catch(handleInterpreterError);
+};
+
+export const runParse = async (
+  input: SourceInput,
+  userId: string
+): Promise<ParseResult> => {
+  return parseCode(input.code, userId).catch(handleInterpreterError);
 };
