@@ -1,56 +1,61 @@
+from typing import Any, Dict, Optional
+
 from pydantic import BaseModel, Field, field_validator
-from typing import Optional
 
 
-class ExecuteRequest(BaseModel):
+class SourceRequest(BaseModel):
+    """Common request schema for source-driven OptiLang endpoints."""
+
+    code: str = Field(
+        ...,
+        min_length=1,
+        max_length=10000,
+        description="OptiLang source code",
+    )
+    user_id: Optional[str] = Field(
+        default=None,
+        description="Optional user ID for tracking",
+    )
+
+    @field_validator("code")
+    @classmethod
+    def code_not_empty(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Code cannot be empty or whitespace only")
+        return value
+
+
+class ExecuteRequest(SourceRequest):
     """Request schema for code execution."""
-    
-    code: str = Field(
-        ..., 
-        min_length=1,
-        max_length=10000,
-        description="PyLite code to execute"
-    )
-    timeout: Optional[int] = Field(
-        default=5, 
-        ge=1, 
+
+    timeout: Optional[float] = Field(
+        default=5,
+        gt=0,
         le=30,
-        description="Execution timeout in seconds"
+        description="Execution timeout in seconds",
     )
-    user_id: Optional[str] = Field(
-        default=None,
-        description="User ID for tracking"
+    enable_profiling: bool = Field(
+        default=True,
+        description="Whether to collect profiling data during execution",
     )
-    
-    @field_validator('code')
-    @classmethod
-    def code_not_empty(cls, v: str) -> str:
-        if not v.strip():
-            raise ValueError('Code cannot be empty or whitespace only')
-        return v
 
 
-class AnalyzeRequest(BaseModel):
+class AnalyzeRequest(ExecuteRequest):
     """Request schema for code analysis."""
-    
-    code: str = Field(
-        ..., 
-        min_length=1,
-        max_length=10000,
-        description="PyLite code to analyze"
-    )
-    execution_trace: Optional[dict] = Field(
+
+    execution_trace: Optional[Dict[str, Any]] = Field(
         default=None,
-        description="Optional execution trace data"
+        description="Reserved for future external trace input",
     )
-    user_id: Optional[str] = Field(
-        default=None,
-        description="User ID for tracking"
-    )
-    
-    @field_validator('code')
-    @classmethod
-    def code_not_empty(cls, v: str) -> str:
-        if not v.strip():
-            raise ValueError('Code cannot be empty or whitespace only')
-        return v
+
+
+class TokenizeRequest(SourceRequest):
+    """Request schema for tokenization."""
+
+
+class ParseRequest(SourceRequest):
+    """Request schema for parsing into an AST."""
+
+
+class OptimizeRequest(ExecuteRequest):
+    """Request schema for optimizer-only analysis."""

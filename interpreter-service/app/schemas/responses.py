@@ -1,141 +1,200 @@
 """
 Pydantic response models for the OptiLang interpreter service.
 
-All field names and types are kept in sync with what optilang library
-methods actually return (ProfilingData.to_dict(), ScoreReport.to_dict()).
+The service preserves the full OptiLang core output surface while keeping
+legacy fields used by the current web backend.
 """
 
-from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field
 
 
-# ---------------------------------------------------------------------------
-# Profiling schemas
-# ---------------------------------------------------------------------------
+class TokenResponseItem(BaseModel):
+    type: str = Field(description="Token type")
+    value: Any = Field(description="Token value")
+    line: int = Field(description="1-based source line")
+    column: int = Field(description="1-based source column")
+
 
 class LineStats(BaseModel):
-    """Per-line execution statistics."""
-    count: int = Field(description="Number of times this line was executed")
-    total_time: float = Field(description="Total time spent on this line (ms)")
-    avg_time: float = Field(description="Average time per execution (ms)")
-    memory: int = Field(description="Variables in scope when line ran")
+    line: Optional[int] = Field(default=None, description="Source line number")
+    count: int = Field(description="Number of executions")
+    total_time_ms: float = Field(description="Total time spent on this line in milliseconds")
+    avg_time_ms: float = Field(description="Average time per execution in milliseconds")
+    min_time_ms: float = Field(description="Fastest recorded execution in milliseconds")
+    max_time_ms: float = Field(description="Slowest recorded execution in milliseconds")
+    memory_vars: int = Field(description="Variables visible when the line ran")
+    memory_bytes: int = Field(description="Estimated memory footprint in bytes")
 
 
 class FunctionStats(BaseModel):
-    """Per-function execution statistics."""
-    calls: int = Field(description="Number of times function was called")
-    total_time: float = Field(description="Total time spent in function (ms)")
-    avg_time: float = Field(description="Average time per call (ms)")
-    max_depth: int = Field(description="Maximum call stack depth reached")
+    name: Optional[str] = Field(default=None, description="Function name")
+    calls: int = Field(description="Number of function calls")
+    total_time_ms: float = Field(description="Total time spent in the function in milliseconds")
+    avg_time_ms: float = Field(description="Average time per call in milliseconds")
+    min_time_ms: float = Field(description="Fastest recorded call in milliseconds")
+    max_time_ms: float = Field(description="Slowest recorded call in milliseconds")
+    max_recursion_depth: int = Field(description="Maximum recursion depth observed")
+    callers: Dict[str, int] = Field(
+        default_factory=dict,
+        description="Call counts by caller name",
+    )
 
 
 class ProfilingData(BaseModel):
-    """
-    Profiling data — matches ProfilingData.to_dict() from the optilang library.
-
-    Key names must exactly match the dict keys returned by to_dict():
-        line_stats, function_stats, total_time_ms, total_lines, lines_profiled
-    """
     line_stats: Dict[str, LineStats] = Field(
-        description="Per-line stats keyed by line number (as string)"
+        default_factory=dict,
+        description="Per-line profiling data keyed by line number",
     )
     function_stats: Dict[str, FunctionStats] = Field(
-        description="Per-function stats keyed by function name"
+        default_factory=dict,
+        description="Per-function profiling data keyed by function name",
     )
     total_time_ms: float = Field(description="Total execution time in milliseconds")
-    total_lines: int = Field(description="Total line executions (sum of all counts)")
-    lines_profiled: int = Field(description="Number of unique lines executed")
+    total_lines_executed: int = Field(description="Total number of executed line events")
+    total_lines: int = Field(description="Backward-compatible alias of total_lines_executed")
+    lines_profiled: int = Field(description="Number of unique lines profiled")
+    peak_memory_bytes: int = Field(description="Peak observed memory usage in bytes")
+    complexity_estimate: str = Field(description="Profiler complexity estimate")
+    complexity_method: str = Field(description="Profiler complexity detection method")
+    complexity_confidence: float = Field(description="Confidence score for complexity estimate")
+    sampled_lines: int = Field(description="Number of sampled line events")
+    skipped_lines: int = Field(description="Number of skipped line events")
+    line_sampling_rate: float = Field(description="Applied line sampling rate")
+    memory_mode: str = Field(description="Profiler memory mode")
 
-
-# ---------------------------------------------------------------------------
-# Score schemas
-# ---------------------------------------------------------------------------
-
-class ScoreBreakdown(BaseModel):
-    """Score penalty breakdown — matches ScoreReport.breakdown dict."""
-    severity_penalty: float = Field(description="Penalty from optimization suggestions")
-    complexity_penalty: float = Field(description="Penalty from detected time complexity")
-    performance_penalty: float = Field(description="Penalty from slow execution vs baseline")
-    memory_penalty: float = Field(description="Penalty from high variable counts")
-
-
-# ---------------------------------------------------------------------------
-# Suggestion schema (Sprint 3 — populated once Optimizer is built)
-# ---------------------------------------------------------------------------
 
 class SuggestionResponse(BaseModel):
-    """Individual optimization suggestion."""
-    line: int = Field(description="Line number where issue was detected")
-    pattern: str = Field(description="Pattern name e.g. 'nested_loops'")
-    severity: str = Field(description="Severity: low | medium | high")
-    description: str = Field(description="Human-readable issue description")
-    suggestion: str = Field(description="Actionable fix suggestion")
-    impact_score: float = Field(ge=0, le=25, description="Score impact (0-25)")
+    line: int = Field(description="Line number where the issue was detected")
+    pattern: str = Field(description="Optimizer pattern name")
+    severity: str = Field(description="Issue severity")
+    description: str = Field(description="Human-readable description")
+    suggestion: str = Field(description="Suggested fix")
+    impact_score: float = Field(description="Estimated impact score")
 
 
-# ---------------------------------------------------------------------------
-# Main response schemas
-# ---------------------------------------------------------------------------
+class DimensionScoresResponse(BaseModel):
+    correctness: float = Field(description="Correctness score")
+    efficiency_complexity: float = Field(description="Efficiency and complexity score")
+    quality: float = Field(description="Code quality score")
+    maintainability: float = Field(description="Maintainability score")
+    complexity_subscore: float = Field(description="Complexity contribution")
+    efficiency_subscore: float = Field(description="Efficiency contribution")
+    profiling_partial: bool = Field(description="Whether profiling data was partial or missing")
+    optimizer_partial: bool = Field(description="Whether optimizer data was partial or missing")
+
+
+class ScoreBreakdown(BaseModel):
+    severity_penalty: float = Field(description="Legacy quality deficit value")
+    complexity_penalty: float = Field(description="Legacy complexity deficit value")
+    performance_penalty: float = Field(description="Legacy efficiency deficit value")
+    memory_penalty: float = Field(description="Legacy memory penalty placeholder")
+
+
+class ScoreReportResponse(BaseModel):
+    score: float = Field(ge=0, le=100, description="Overall OptiLang score")
+    grade: str = Field(description="Human-readable grade")
+    complexity_class: str = Field(description="Detected complexity class")
+    dimensions: DimensionScoresResponse = Field(description="Per-dimension score report")
+    narrative: str = Field(description="Beginner-friendly explanation")
+    error_count: int = Field(description="Number of execution errors")
+    lines_profiled: int = Field(description="Number of unique lines profiled")
+    cv: float = Field(description="Coefficient of variation of execution counts")
+
 
 class ExecutionResponse(BaseModel):
-    """
-    Response for POST /execute.
-
-    Mirrors optilang.execute() → ExecutionResult fields.
-    """
-    success: bool = Field(description="True if execution completed without fatal error")
-    output: str = Field(description="Program stdout output")
-    errors: List[str] = Field(
-        default_factory=list,
-        description="Runtime or syntax errors (empty if clean run)"
-    )
+    success: bool = Field(description="True if execution completed without errors")
+    output: str = Field(description="Captured stdout output")
+    errors: List[str] = Field(default_factory=list, description="Execution errors")
     execution_time: float = Field(description="Wall-clock execution time in seconds")
     profiling: Optional[ProfilingData] = Field(
         default=None,
-        description="Line-by-line profiling data (None if profiling disabled)"
+        description="Runtime profiling output",
+    )
+    symbol_table: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Final global symbol table with JSON-safe values",
+    )
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+class OptimizationResponse(BaseModel):
+    success: bool = Field(description="True if optimization analysis completed")
+    errors: List[str] = Field(default_factory=list, description="Execution or syntax errors")
+    suggestions: List[SuggestionResponse] = Field(
+        default_factory=list,
+        description="Optimization suggestions sorted by impact",
+    )
+    suggestion_count: int = Field(description="Number of suggestions returned")
+    profiling: Optional[ProfilingData] = Field(
+        default=None,
+        description="Profiling data used by the optimizer",
+    )
+    symbol_table: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Final global symbol table with JSON-safe values",
     )
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 
 class AnalysisResponse(BaseModel):
-    """
-    Response for POST /analyze.
-
-    Combines execution profiling with optimization scoring.
-    Suggestions list is empty in v0.2.0 (populated in Sprint 3).
-    """
-    success: bool = Field(description="True if analysis completed")
-    output: str = Field(description="Program stdout output")
-    errors: List[str] = Field(
-        default_factory=list,
-        description="Runtime or syntax errors"
-    )
+    success: bool = Field(description="True if analysis completed without errors")
+    output: str = Field(description="Captured stdout output")
+    errors: List[str] = Field(default_factory=list, description="Execution errors")
     execution_time: float = Field(description="Wall-clock execution time in seconds")
     profiling: Optional[ProfilingData] = Field(
         default=None,
-        description="Line-by-line profiling data"
+        description="Runtime profiling output",
+    )
+    symbol_table: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Final global symbol table with JSON-safe values",
     )
     suggestions: List[SuggestionResponse] = Field(
         default_factory=list,
-        description="Optimization suggestions (populated in Sprint 3)"
+        description="Optimization suggestions",
     )
     optimization_score: float = Field(
         ge=0,
         le=100,
-        description="Overall optimization score (0-100)"
+        description="Backward-compatible mirror of score_report.score",
     )
-    score_breakdown: ScoreBreakdown = Field(description="Per-component penalty breakdown")
-    complexity_class: str = Field(description="Detected time complexity e.g. 'O(n²)'")
+    score_breakdown: ScoreBreakdown = Field(description="Backward-compatible legacy breakdown")
+    complexity_class: str = Field(description="Detected complexity class")
     complexity_analysis: Dict[str, Any] = Field(
         default_factory=dict,
-        description="Full complexity analysis details"
+        description="Backward-compatible score summary for existing clients",
     )
+    score_report: ScoreReportResponse = Field(description="Full scorer output")
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+class TokenizeResponse(BaseModel):
+    success: bool = Field(description="True if tokenization succeeded")
+    tokens: List[TokenResponseItem] = Field(default_factory=list, description="Token stream")
+    token_count: int = Field(description="Number of returned tokens")
+    errors: List[str] = Field(default_factory=list, description="Lexer errors")
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ParseResponse(BaseModel):
+    success: bool = Field(description="True if parsing succeeded")
+    tokens: List[TokenResponseItem] = Field(
+        default_factory=list,
+        description="Token stream used for parsing",
+    )
+    token_count: int = Field(description="Number of returned tokens")
+    ast: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="JSON-safe AST structure",
+    )
+    errors: List[str] = Field(default_factory=list, description="Lexer or parser errors")
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 
 class HealthResponse(BaseModel):
-    """Response for GET /health."""
-    status: str = Field(description="Service status: 'healthy'")
+    status: str = Field(description="Service status")
     version: str = Field(description="Service version")
     timestamp: datetime = Field(description="Current server time")
