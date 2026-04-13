@@ -1,10 +1,9 @@
-from typing import Any, Dict, Optional
-
+from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
 
-class SourceRequest(BaseModel):
-    """Common request schema for source-driven OptiLang endpoints."""
+class CodeRequest(BaseModel):
+    """Base request for all code-related endpoints."""
 
     code: str = Field(
         ...,
@@ -25,8 +24,8 @@ class SourceRequest(BaseModel):
         return value
 
 
-class ExecuteRequest(SourceRequest):
-    """Request schema for code execution."""
+class ExecuteRequest(CodeRequest):
+    """Request for /execute and /analyze endpoints."""
 
     timeout: Optional[float] = Field(
         default=5,
@@ -36,26 +35,5 @@ class ExecuteRequest(SourceRequest):
     )
     enable_profiling: bool = Field(
         default=True,
-        description="Whether to collect profiling data during execution",
+        description="Whether to collect profiling data",
     )
-
-
-class AnalyzeRequest(ExecuteRequest):
-    """Request schema for code analysis."""
-
-    execution_trace: Optional[Dict[str, Any]] = Field(
-        default=None,
-        description="Reserved for future external trace input",
-    )
-
-
-class TokenizeRequest(SourceRequest):
-    """Request schema for tokenization."""
-
-
-class ParseRequest(SourceRequest):
-    """Request schema for parsing into an AST."""
-
-
-class OptimizeRequest(ExecuteRequest):
-    """Request schema for optimizer-only analysis."""
