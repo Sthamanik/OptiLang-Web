@@ -1,7 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
-
 class CodeRequest(BaseModel):
     """Base request for all code-related endpoints."""
 
@@ -23,7 +22,6 @@ class CodeRequest(BaseModel):
             raise ValueError("Code cannot be empty or whitespace only")
         return value
 
-
 class ExecuteRequest(CodeRequest):
     """Request for /execute and /analyze endpoints."""
 
@@ -37,3 +35,9 @@ class ExecuteRequest(CodeRequest):
         default=True,
         description="Whether to collect profiling data",
     )
+
+class TokenizeRequest(CodeRequest):
+    """Request for /tokenize endpoint."""
+
+class ParseRequest(CodeRequest):
+    """Request for /parse endpoint."""
