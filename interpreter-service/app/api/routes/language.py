@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 from fastapi import APIRouter, HTTPException, status
@@ -27,7 +27,7 @@ async def tokenize_code(request: TokenizeRequest) -> TokenizeResponse:
             tokens=serialized_tokens,
             token_count=len(serialized_tokens),
             errors=[],
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
     except OptiLangError as exc:
         logger.info("Tokenization error: %s", exc)
@@ -36,7 +36,7 @@ async def tokenize_code(request: TokenizeRequest) -> TokenizeResponse:
             tokens=[],
             token_count=0,
             errors=[str(exc)],
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
     except Exception as exc:
         logger.error("Unexpected tokenize error: %s", exc, exc_info=True)
@@ -52,24 +52,19 @@ async def parse_code(request: ParseRequest) -> ParseResponse:
     try:
         tokens = tokenize(request.code)
         ast = parse(tokens)
-        serialized_tokens = serialize_tokens(tokens)
         return ParseResponse(
             success=True,
-            tokens=serialized_tokens,
-            token_count=len(serialized_tokens),
             ast=to_json_safe(ast),
             errors=[],
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
     except OptiLangError as exc:
         logger.info("Parse error: %s", exc)
         return ParseResponse(
             success=False,
-            tokens=[],
-            token_count=0,
             ast=None,
             errors=[str(exc)],
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
     except Exception as exc:
         logger.error("Unexpected parse error: %s", exc, exc_info=True)

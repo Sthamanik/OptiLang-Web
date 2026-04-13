@@ -7,13 +7,15 @@ from app.api.routes import (
     health_router,
     language_router,
     optimization_router,
+    profile_router,
+    score_router,
 )
 import logging
 
 # Configure logging
 logging.basicConfig(
     level=settings.log_level,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
 logger = logging.getLogger(__name__)
@@ -46,11 +48,13 @@ def create_app() -> FastAPI:
     )
     
     # Include routers
-    app.include_router(health_router)
-    app.include_router(execution_router)
     app.include_router(analysis_router)
-    app.include_router(optimization_router)
+    app.include_router(execution_router)
+    app.include_router(health_router)
     app.include_router(language_router)
+    app.include_router(optimization_router)
+    app.include_router(profile_router)
+    app.include_router(score_router)
     
     @app.on_event("startup")
     async def startup_event():
