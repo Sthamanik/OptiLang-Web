@@ -120,6 +120,21 @@ export interface AnalysisResult extends ExecutionResult {
   score_report: ScoreReport;
 }
 
+export interface ProfileResult {
+  success: boolean;
+  errors: string[];
+  execution_time: number;
+  profiling: ProfilingData | null;
+  timestamp: string;
+}
+
+export interface ScoreResult {
+  success: boolean;
+  errors: string[];
+  score_report: ScoreReport;
+  timestamp: string;
+}
+
 export interface TokenizeResult {
   success: boolean;
   tokens: TokenResponseItem[];
@@ -194,6 +209,36 @@ export const parseCode = async (
 ): Promise<ParseResult> => {
   const { data } = await interpreterClient.post<ParseResult>("/parse", {
     code,
+    user_id: userId,
+  });
+  return data;
+};
+
+export const profileCode = async (
+  code: string,
+  userId?: string,
+  timeout = 5,
+  enableProfiling = true
+): Promise<ProfileResult> => {
+  const { data } = await interpreterClient.post<ProfileResult>("/profile", {
+    code,
+    timeout,
+    enable_profiling: enableProfiling,
+    user_id: userId,
+  });
+  return data;
+};
+
+export const scoreCode = async (
+  code: string,
+  userId?: string,
+  timeout = 5,
+  enableProfiling = true
+): Promise<ScoreResult> => {
+  const { data } = await interpreterClient.post<ScoreResult>("/score", {
+    code,
+    timeout,
+    enable_profiling: enableProfiling,
     user_id: userId,
   });
   return data;

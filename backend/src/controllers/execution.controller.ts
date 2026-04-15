@@ -70,3 +70,29 @@ export const parse = asyncHandler(async (req: AuthRequest, res: Response) => {
     .status(200)
     .json(new ApiResponse(200, result, "Code parsed successfully"));
 });
+
+export const profile = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const parsed = codeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new ApiError(400, parsed.error.issues[0]?.message ?? "Invalid input");
+  }
+
+  const result = await executionService.runProfile(parsed.data, req.user!._id);
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, result, "Code profiled successfully"));
+});
+
+export const score = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const parsed = codeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new ApiError(400, parsed.error.issues[0]?.message ?? "Invalid input");
+  }
+
+  const result = await executionService.runScore(parsed.data, req.user!._id);
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, result, "Code scored successfully"));
+});

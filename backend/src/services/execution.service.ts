@@ -7,6 +7,10 @@ import {
   OptimizationResult,
   parseCode,
   ParseResult,
+  profileCode,
+  ProfileResult,
+  scoreCode,
+  ScoreResult,
   tokenizeCode,
   TokenizeResult,
 } from "@services/interpreterClient.service.js";
@@ -118,4 +122,28 @@ export const runParse = async (
   userId: string
 ): Promise<ParseResult> => {
   return parseCode(input.code, userId).catch(handleInterpreterError);
+};
+
+export const runProfile = async (
+  input: CodeInput,
+  userId: string
+): Promise<ProfileResult> => {
+  return profileCode(
+    input.code,
+    userId,
+    input.timeout,
+    input.enable_profiling
+  ).catch(handleInterpreterError);
+};
+
+export const runScore = async (
+  input: CodeInput,
+  userId: string
+): Promise<ScoreResult> => {
+  return scoreCode(
+    input.code,
+    userId,
+    input.timeout,
+    input.enable_profiling
+  ).catch(handleInterpreterError);
 };

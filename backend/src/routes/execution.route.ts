@@ -10,5 +10,7 @@ router.post("/analyze", verifyJWT, executionLimiter, executionController.analyze
 router.post("/optimize", verifyJWT, executionLimiter, executionController.optimize);
 router.post("/tokenize", verifyJWT, executionLimiter, executionController.tokenize);
 router.post("/parse", verifyJWT, executionLimiter, executionController.parse);
+router.post("/profile", verifyJWT, executionLimiter, executionController.profile);
+router.post("/score", verifyJWT, executionLimiter, executionController.score);
 
 export default router;
