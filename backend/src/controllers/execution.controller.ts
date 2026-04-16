@@ -6,43 +6,47 @@ import { codeSchema, sourceSchema } from "@validations/execution.validation.js";
 import * as executionService from "@services/execution.service.js";
 import { AuthRequest } from "@middlewares/auth.middleware.js";
 
+function parseCodeInput(body: unknown) {
+  const parsed = codeSchema.safeParse(body);
+  if (!parsed.success) {
+    throw new ApiError(400, parsed.error.issues[0]?.message ?? "Invalid input");
+  }
+  return parsed.data;
+}
+
+/** POST /api/execute — raw run, persists execution record */
 export const execute = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const parsed = codeSchema.safeParse(req.body);
-  if (!parsed.success) {
-    throw new ApiError(400, parsed.error.issues[0]?.message ?? "Invalid input");
-  }
-
-  const result = await executionService.runCode(parsed.data, req.user!._id);
-
-  res
-    .status(200)
-    .json(new ApiResponse(200, result, "Code executed successfully"));
+  const input = parseCodeInput(req.body);
+  const result = await executionService.runExecute(input, req.user!._id);
+  res.status(200).json(new ApiResponse(200, result, "Code executed successfully"));
 });
 
+/** POST /api/analyze — full pipeline, persists execution record with score */
 export const analyze = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const parsed = codeSchema.safeParse(req.body);
-  if (!parsed.success) {
-    throw new ApiError(400, parsed.error.issues[0]?.message ?? "Invalid input");
-  }
-
-  const result = await executionService.runAnalysis(parsed.data, req.user!._id);
-
-  res
-    .status(200)
-    .json(new ApiResponse(200, result, "Code analyzed successfully"));
+  const input = parseCodeInput(req.body);
+  const result = await executionService.runAnalyze(input, req.user!._id);
+  res.status(200).json(new ApiResponse(200, result, "Code analyzed successfully"));
 });
 
+/** POST /api/profile — profiling data only */
+export const profile = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const input = parseCodeInput(req.body);
+  const result = await executionService.runProfile(input, req.user!._id);
+  res.status(200).json(new ApiResponse(200, result, "Profiling completed"));
+});
+
+/** POST /api/optimize — suggestions only */
 export const optimize = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const parsed = codeSchema.safeParse(req.body);
-  if (!parsed.success) {
-    throw new ApiError(400, parsed.error.issues[0]?.message ?? "Invalid input");
-  }
+  const input = parseCodeInput(req.body);
+  const result = await executionService.runOptimize(input, req.user!._id);
+  res.status(200).json(new ApiResponse(200, result, "Optimization suggestions ready"));
+});
 
-  const result = await executionService.runOptimization(parsed.data, req.user!._id);
-
-  res
-    .status(200)
-    .json(new ApiResponse(200, result, "Code optimized successfully"));
+/** POST /api/score — score report only */
+export const score = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const input = parseCodeInput(req.body);
+  const result = await executionService.runScore(input, req.user!._id);
+  res.status(200).json(new ApiResponse(200, result, "Score calculated"));
 });
 
 export const tokenize = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -69,30 +73,4 @@ export const parse = asyncHandler(async (req: AuthRequest, res: Response) => {
   res
     .status(200)
     .json(new ApiResponse(200, result, "Code parsed successfully"));
-});
-
-export const profile = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const parsed = codeSchema.safeParse(req.body);
-  if (!parsed.success) {
-    throw new ApiError(400, parsed.error.issues[0]?.message ?? "Invalid input");
-  }
-
-  const result = await executionService.runProfile(parsed.data, req.user!._id);
-
-  res
-    .status(200)
-    .json(new ApiResponse(200, result, "Code profiled successfully"));
-});
-
-export const score = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const parsed = codeSchema.safeParse(req.body);
-  if (!parsed.success) {
-    throw new ApiError(400, parsed.error.issues[0]?.message ?? "Invalid input");
-  }
-
-  const result = await executionService.runScore(parsed.data, req.user!._id);
-
-  res
-    .status(200)
-    .json(new ApiResponse(200, result, "Code scored successfully"));
 });

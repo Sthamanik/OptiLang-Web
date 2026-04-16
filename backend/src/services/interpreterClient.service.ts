@@ -73,13 +73,6 @@ export interface DimensionScores {
   optimizer_partial: boolean;
 }
 
-export interface ScoreBreakdown {
-  severity_penalty: number;
-  complexity_penalty: number;
-  performance_penalty: number;
-  memory_penalty: number;
-}
-
 export interface ScoreReport {
   score: number;
   grade: string;
@@ -91,7 +84,7 @@ export interface ScoreReport {
   cv: number;
 }
 
-export interface ExecutionResult {
+export interface ExecuteResult {
   success: boolean;
   output: string;
   errors: string[];
@@ -99,25 +92,6 @@ export interface ExecutionResult {
   profiling: ProfilingData | null;
   symbol_table: Record<string, unknown>;
   timestamp: string;
-}
-
-export interface OptimizationResult {
-  success: boolean;
-  errors: string[];
-  suggestions: Suggestion[];
-  suggestion_count: number;
-  profiling: ProfilingData | null;
-  symbol_table: Record<string, unknown>;
-  timestamp: string;
-}
-
-export interface AnalysisResult extends ExecutionResult {
-  suggestions: Suggestion[];
-  optimization_score: number;
-  score_breakdown: ScoreBreakdown;
-  complexity_class: string;
-  complexity_analysis: Record<string, unknown>;
-  score_report: ScoreReport;
 }
 
 export interface ProfileResult {
@@ -128,9 +102,29 @@ export interface ProfileResult {
   timestamp: string;
 }
 
+export interface OptimizeResult {
+  success: boolean;
+  errors: string[];
+  suggestions: Suggestion[];
+  suggestion_count: number;
+  timestamp: string;
+}
+
 export interface ScoreResult {
   success: boolean;
   errors: string[];
+  score_report: ScoreReport;
+  timestamp: string;
+}
+
+export interface AnalyzeResult {
+  success: boolean;
+  output: string;
+  errors: string[];
+  execution_time: number;
+  profiling: ProfilingData | null;
+  symbol_table: Record<string, unknown>;
+  suggestions: Suggestion[];
   score_report: ScoreReport;
   timestamp: string;
 }
@@ -147,33 +141,37 @@ export interface ParseResult extends TokenizeResult {
   ast: Record<string, unknown> | null;
 }
 
+function buildPayload(
+  code: string,
+  userId?: string,
+  timeout = 5,
+  enableProfiling = true,
+) {
+  return { code, user_id: userId, timeout, enable_profiling: enableProfiling };
+}
+
 export const executeCode = async (
   code: string,
   userId?: string,
   timeout = 5,
-  enableProfiling = true
-): Promise<ExecutionResult> => {
-  const { data } = await interpreterClient.post<ExecutionResult>("/execute", {
-    code,
-    timeout,
-    enable_profiling: enableProfiling,
-    user_id: userId,
-  });
+  enableProfiling = true,
+): Promise<ExecuteResult> => {
+  const { data } = await interpreterClient.post<ExecuteResult>(
+    "/execute",
+    buildPayload(code, userId, timeout, enableProfiling),
+  );
   return data;
 };
 
-export const analyzeCode = async (
+export const profileCode = async (
   code: string,
   userId?: string,
   timeout = 5,
-  enableProfiling = true
-): Promise<AnalysisResult> => {
-  const { data } = await interpreterClient.post<AnalysisResult>("/analyze", {
-    code,
-    timeout,
-    enable_profiling: enableProfiling,
-    user_id: userId,
-  });
+): Promise<ProfileResult> => {
+  const { data } = await interpreterClient.post<ProfileResult>(
+    "/profile",
+    buildPayload(code, userId, timeout, true),
+  );
   return data;
 };
 
@@ -181,14 +179,36 @@ export const optimizeCode = async (
   code: string,
   userId?: string,
   timeout = 5,
-  enableProfiling = true
-): Promise<OptimizationResult> => {
-  const { data } = await interpreterClient.post<OptimizationResult>("/optimize", {
-    code,
-    timeout,
-    enable_profiling: enableProfiling,
-    user_id: userId,
-  });
+): Promise<OptimizeResult> => {
+  const { data } = await interpreterClient.post<OptimizeResult>(
+    "/optimize",
+    buildPayload(code, userId, timeout, true),
+  );
+  return data;
+};
+
+export const scoreCode = async (
+  code: string,
+  userId?: string,
+  timeout = 5,
+): Promise<ScoreResult> => {
+  const { data } = await interpreterClient.post<ScoreResult>(
+    "/score",
+    buildPayload(code, userId, timeout, true),
+  );
+  return data;
+};
+
+export const analyzeCode = async (
+  code: string,
+  userId?: string,
+  timeout = 5,
+  enableProfiling = true,
+): Promise<AnalyzeResult> => {
+  const { data } = await interpreterClient.post<AnalyzeResult>(
+    "/analyze",
+    buildPayload(code, userId, timeout, enableProfiling),
+  );
   return data;
 };
 
@@ -209,36 +229,6 @@ export const parseCode = async (
 ): Promise<ParseResult> => {
   const { data } = await interpreterClient.post<ParseResult>("/parse", {
     code,
-    user_id: userId,
-  });
-  return data;
-};
-
-export const profileCode = async (
-  code: string,
-  userId?: string,
-  timeout = 5,
-  enableProfiling = true
-): Promise<ProfileResult> => {
-  const { data } = await interpreterClient.post<ProfileResult>("/profile", {
-    code,
-    timeout,
-    enable_profiling: enableProfiling,
-    user_id: userId,
-  });
-  return data;
-};
-
-export const scoreCode = async (
-  code: string,
-  userId?: string,
-  timeout = 5,
-  enableProfiling = true
-): Promise<ScoreResult> => {
-  const { data } = await interpreterClient.post<ScoreResult>("/score", {
-    code,
-    timeout,
-    enable_profiling: enableProfiling,
     user_id: userId,
   });
   return data;

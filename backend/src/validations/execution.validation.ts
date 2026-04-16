@@ -46,5 +46,6 @@ export const historyQuerySchema = z.object({
 });
 
 export type CodeInput = z.infer<typeof codeSchema>;
+
 export type SourceInput = z.infer<typeof sourceSchema>;
 export type HistoryQuery = z.infer<typeof historyQuerySchema>;

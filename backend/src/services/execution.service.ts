@@ -1,10 +1,10 @@
 import {
   analyzeCode,
-  AnalysisResult,
+  AnalyzeResult,
   executeCode,
-  ExecutionResult,
+  ExecuteResult,
   optimizeCode,
-  OptimizationResult,
+  OptimizeResult,
   parseCode,
   ParseResult,
   profileCode,
@@ -14,17 +14,32 @@ import {
   tokenizeCode,
   TokenizeResult,
 } from "@services/interpreterClient.service.js";
-import { Execution } from "@/models/Execution.model.js";
+import { Execution } from "@models/Execution.model.js";
 import { ApiError } from "@utils/apiError.util.js";
 import logger from "@utils/logger.util.js";
 import { CodeInput, SourceInput } from "@validations/execution.validation.js";
 
-// ── Helpers 
+const handleInterpreterError = (err: unknown): never => {
+  if (typeof err === "object" && err !== null && "response" in err) {
+    const axiosErr = err as {
+      response?: { status?: number; data?: { detail?: string } };
+    };
+    const status = axiosErr.response?.status;
+    const detail = axiosErr.response?.data?.detail;
+    throw new ApiError(
+      status === 422 ? 400 : 502,
+      detail || "Interpreter service unavailable",
+    );
+  }
+  throw new ApiError(502, "Interpreter service unavailable");
+};
 
-const saveExecution = (
+// ── Persist execution record (fire-and-forget) ────────────────────────────────
+
+const persistExecution = (
   userId: string,
   code: string,
-  result: ExecutionResult | AnalysisResult
+  result: ExecuteResult | AnalyzeResult,
 ): void => {
   const record: Record<string, unknown> = {
     userId,
@@ -34,80 +49,77 @@ const saveExecution = (
     executionTime: result.execution_time,
   };
 
-  // Only present on AnalysisResult
-  if ("optimization_score" in result) {
-    record["optimizationScore"] = result.optimization_score;
-    record["complexityClass"] = result.complexity_class;
+  if ("score_report" in result) {
+    record["optimizationScore"] = result.score_report.score;
+    record["complexityClass"] = result.score_report.complexity_class;
   }
 
   Execution.create(record).catch((err) =>
-    logger.error("Failed to save execution record:", err)
+    logger.error("Failed to persist execution record:", err),
   );
 };
 
-const handleInterpreterError = (err: unknown): never => {
-  if (
-    typeof err === "object" &&
-    err !== null &&
-    "response" in err
-  ) {
-    const axiosErr = err as { response?: { status?: number; data?: { detail?: string } } };
-    const status = axiosErr.response?.status;
-    const detail = axiosErr.response?.data?.detail;
-    throw new ApiError(
-      status === 422 ? 400 : 502,
-      detail || "Interpreter service unavailable"
-    );
-  }
-  throw new ApiError(502, "Interpreter service unavailable");
-};
-
-// ── Service methods 
-
-export const runCode = async (
+export const runExecute = async (
   input: CodeInput,
-  userId: string
-): Promise<ExecutionResult> => {
+  userId: string,
+): Promise<ExecuteResult> => {
   const result = await executeCode(
     input.code,
     userId,
     input.timeout,
-    input.enable_profiling
+    input.enable_profiling,
   ).catch(handleInterpreterError);
 
-  saveExecution(userId, input.code, result);
-
+  persistExecution(userId, input.code, result);
   return result;
 };
 
-export const runAnalysis = async (
+export const runAnalyze = async (
   input: CodeInput,
-  userId: string
-): Promise<AnalysisResult> => {
+  userId: string,
+): Promise<AnalyzeResult> => {
   const result = await analyzeCode(
     input.code,
     userId,
     input.timeout,
-    input.enable_profiling
-  ).catch(
-    handleInterpreterError
-  );
+    input.enable_profiling,
+  ).catch(handleInterpreterError);
 
-  saveExecution(userId, input.code, result);
-
+  persistExecution(userId, input.code, result);
   return result;
 };
 
-export const runOptimization = async (
+export const runProfile = async (
   input: CodeInput,
-  userId: string
-): Promise<OptimizationResult> => {
-  return optimizeCode(
-    input.code,
-    userId,
-    input.timeout,
-    input.enable_profiling
-  ).catch(handleInterpreterError);
+  userId: string,
+): Promise<ProfileResult> => {
+  return profileCode(input.code, userId, input.timeout).catch(
+    handleInterpreterError,
+  );
+};
+
+/**
+ * Suggestions only — no output, no score.
+ */
+export const runOptimize = async (
+  input: CodeInput,
+  userId: string,
+): Promise<OptimizeResult> => {
+  return optimizeCode(input.code, userId, input.timeout).catch(
+    handleInterpreterError,
+  );
+};
+
+/**
+ * Score only — no output, no profiling, no suggestions.
+ */
+export const runScore = async (
+  input: CodeInput,
+  userId: string,
+): Promise<ScoreResult> => {
+  return scoreCode(input.code, userId, input.timeout).catch(
+    handleInterpreterError,
+  );
 };
 
 export const runTokenize = async (
@@ -122,28 +134,4 @@ export const runParse = async (
   userId: string
 ): Promise<ParseResult> => {
   return parseCode(input.code, userId).catch(handleInterpreterError);
-};
-
-export const runProfile = async (
-  input: CodeInput,
-  userId: string
-): Promise<ProfileResult> => {
-  return profileCode(
-    input.code,
-    userId,
-    input.timeout,
-    input.enable_profiling
-  ).catch(handleInterpreterError);
-};
-
-export const runScore = async (
-  input: CodeInput,
-  userId: string
-): Promise<ScoreResult> => {
-  return scoreCode(
-    input.code,
-    userId,
-    input.timeout,
-    input.enable_profiling
-  ).catch(handleInterpreterError);
 };

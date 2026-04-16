@@ -5,12 +5,15 @@ import { executionLimiter } from "@middlewares/rateLimiter.middleware.js";
 
 const router: Router = Router();
 
-router.post("/execute", verifyJWT, executionLimiter, executionController.execute);
-router.post("/analyze", verifyJWT, executionLimiter, executionController.analyze);
-router.post("/optimize", verifyJWT, executionLimiter, executionController.optimize);
-router.post("/tokenize", verifyJWT, executionLimiter, executionController.tokenize);
-router.post("/parse", verifyJWT, executionLimiter, executionController.parse);
-router.post("/profile", verifyJWT, executionLimiter, executionController.profile);
-router.post("/score", verifyJWT, executionLimiter, executionController.score);
+// All execution routes require auth + rate limiting
+router.use(verifyJWT, executionLimiter);
+
+router.post("/execute",  executionController.execute);   // raw run
+router.post("/analyze",  executionController.analyze);   // full pipeline
+router.post("/profile",  executionController.profile);   // profiling only
+router.post("/optimize", executionController.optimize);  // suggestions only
+router.post("/score",    executionController.score);     // score only
+router.post("/tokenize", executionController.tokenize); // tokenization
+router.post("/parse",    executionController.parse);    // parsing
 
 export default router;
