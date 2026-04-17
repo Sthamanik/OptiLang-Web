@@ -13,11 +13,9 @@
       "vite/client"
     ],
     "skipLibCheck": true,
-    /* Path Alias */
-    "baseUrl": ".",
     "paths": {
       "@/*": [
-        "src/*"
+        "./src/*"
       ]
     },
     /* Bundler mode */

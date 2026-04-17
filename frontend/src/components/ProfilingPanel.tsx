@@ -1,42 +1,69 @@
+import { useEffect, useRef } from 'react'
 import {
   Chart as ChartJS,
-  CategoryScale, LinearScale, BarElement,
-  Tooltip, Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
 } from 'chart.js'
 import { Bar } from 'react-chartjs-2'
-import { Flame, Zap, Activity } from 'lucide-react'
+import { ChevronRight, Zap, Activity, Flame } from 'lucide-react'
 import type { ProfilingData } from '@/types'
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip)
 
-interface Props { profiling: ProfilingData | null }
+interface Props {
+  profiling: ProfilingData | null
+}
+
+function heatColor(avgMs: number): string {
+  if (avgMs > 5) return '#f87171'
+  if (avgMs > 0.5) return '#e8a94a'
+  return '#3ecf8e'
+}
+
+function AnimatedHeatBar({ pct, color }: { pct: number; color: string }) {
+  const fillRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = fillRef.current
+    if (!el) return
+    el.style.width = '0%'
+    el.style.transition = 'none'
+    void el.getBoundingClientRect()
+    requestAnimationFrame(() => {
+      el.style.transition = 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+      el.style.width = `${pct}%`
+    })
+  }, [pct])
+
+  return (
+    <div className="pf-heat-track">
+      <div ref={fillRef} className="pf-heat-fill" style={{ width: '0%', background: color }} />
+      <div className="pf-heat-remain" style={{ flex: 1 }} />
+    </div>
+  )
+}
 
 export default function ProfilingPanel({ profiling }: Props) {
   if (!profiling) {
     return (
       <div className="placeholder">
-        <Activity size={18} />
         <span>Run code with profiling enabled to see metrics</span>
       </div>
     )
   }
 
-  const entries = Object.values(profiling.line_stats).sort(
-    (a, b) => a.line - b.line,
-  )
-
-  const barColors = entries.map((s) => {
-    if (s.avg_time_ms > 5)   return 'rgba(226,75,74,0.8)'
-    if (s.avg_time_ms > 0.5) return 'rgba(239,159,39,0.8)'
-    return                         'rgba(29,158,117,0.8)'
-  })
+  const entries = Object.values(profiling.line_stats).sort((a, b) => a.line - b.line)
+  const hottest = [...entries].sort((a, b) => b.avg_time_ms - a.avg_time_ms).slice(0, 5)
+  const maxAvg  = hottest[0]?.avg_time_ms ?? 1
 
   const chartData = {
     labels: entries.map((s) => `L${s.line}`),
     datasets: [{
       label: 'Avg time (ms)',
-      data: entries.map((s) => s.avg_time_ms),
-      backgroundColor: barColors,
+      data:  entries.map((s) => s.avg_time_ms),
+      backgroundColor: entries.map((s) => heatColor(s.avg_time_ms)),
       borderRadius: 3,
       borderSkipped: false,
     }],
@@ -52,33 +79,23 @@ export default function ProfilingPanel({ profiling }: Props) {
           title: (items: any[]) => `Line ${entries[items[0].dataIndex].line}`,
           label: (item: any) => {
             const s = entries[item.dataIndex]
-            return [
-              ` Count: ${s.count}×`,
-              ` Avg: ${s.avg_time_ms.toFixed(3)} ms`,
-              ` Total: ${s.total_time_ms.toFixed(3)} ms`,
-              ` Memory: ${s.memory_bytes}B`,
-            ]
+            return [`Count: ${s.count}×`, `Avg: ${s.avg_time_ms.toFixed(3)} ms`, `Total: ${s.total_time_ms.toFixed(3)} ms`]
           },
         },
       },
     },
     scales: {
-      x: { ticks: { color: '#6e7681', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-      y: {
-        ticks: { color: '#6e7681', font: { size: 11 }, callback: (v: any) => `${v}ms` },
-        grid: { color: 'rgba(255,255,255,0.04)' },
-        beginAtZero: true,
-      },
+      x: { ticks: { color: '#72727c', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+      y: { beginAtZero: true, ticks: { color: '#72727c', font: { size: 9 }, callback: (v: any) => `${v} ms` }, grid: { color: 'rgba(255,255,255,0.04)' } },
     },
   }
 
-  // Top 3 hottest lines
-  const hottest = [...entries].sort((a, b) => b.avg_time_ms - a.avg_time_ms).slice(0, 3)
+  const fnStats = Object.values(profiling.function_stats)
 
   return (
-    <div className="panel-body profiling-body">
+    <div className="pf-body">
 
-      {/* Summary pills */}
+      {/* Summary cards */}
       <div className="stat-grid">
         <div className="stat-card">
           <Zap size={14} className="stat-icon amber" />
@@ -102,7 +119,7 @@ export default function ProfilingPanel({ profiling }: Props) {
         </div>
       </div>
 
-      {/* Bar chart */}
+      {/* Chart */}
       {entries.length > 0 && (
         <>
           <p className="section-label">Line execution time</p>
@@ -117,53 +134,55 @@ export default function ProfilingPanel({ profiling }: Props) {
         </>
       )}
 
-      {/* Hottest lines table */}
+      {/* Hottest lines with animated heat bar */}
       {hottest.length > 0 && (
-        <>
-          <p className="section-label">Hottest lines</p>
-          <table className="profile-table">
-            <thead>
-              <tr>
-                <th>Line</th><th>Count</th><th>Avg (ms)</th><th>Total (ms)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {hottest.map((s) => (
-                <tr key={s.line}>
-                  <td className="line-num">L{s.line}</td>
-                  <td>{s.count}×</td>
-                  <td className={s.avg_time_ms > 5 ? 'hot' : ''}>{s.avg_time_ms.toFixed(3)}</td>
-                  <td>{s.total_time_ms.toFixed(3)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
+        <div className="pf-section">
+          <p className="pf-section-label">Hottest lines</p>
+          <div className="pf-hot-table">
+            <div className="pf-hot-header">
+              <span>Line</span>
+              <span>Time</span>
+              <span>Count</span>
+              <span>Heat</span>
+            </div>
+            {hottest.map((s) => {
+              const pct   = (s.avg_time_ms / maxAvg) * 100
+              const color = heatColor(s.avg_time_ms)
+              return (
+                <div key={s.line} className="pf-hot-row">
+                  <span className="pf-hot-line">L{s.line}</span>
+                  <span className="pf-hot-time">{s.avg_time_ms.toFixed(3)} ms</span>
+                  <span className="pf-hot-count">{s.count}×</span>
+                  <AnimatedHeatBar pct={pct} color={color} />
+                </div>
+              )
+            })}
+          </div>
+        </div>
       )}
 
-      {/* Function stats */}
-      {Object.keys(profiling.function_stats).length > 0 && (
-        <>
-          <p className="section-label">Function calls</p>
-          <table className="profile-table">
-            <thead>
-              <tr>
-                <th>Function</th><th>Calls</th><th>Avg (ms)</th><th>Total (ms)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.values(profiling.function_stats).map((f) => (
-                <tr key={f.name}>
-                  <td className="fn-name">{f.name}()</td>
-                  <td>{f.calls}×</td>
-                  <td>{f.avg_time_ms.toFixed(3)}</td>
-                  <td>{f.total_time_ms.toFixed(3)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
+      {/* Function calls */}
+      {fnStats.length > 0 && (
+        <div className="pf-section">
+          <p className="pf-section-label">Function calls</p>
+          <div className="pf-fn-list">
+            {fnStats.map((f) => (
+              <div key={f.name} className="pf-fn-card">
+                <div className="pf-fn-info">
+                  <span className="pf-fn-name">{f.name}()</span>
+                  <div className="pf-fn-tags">
+                    <span className="pf-tag pf-tag-blue">{f.calls} calls</span>
+                    <span className="pf-tag pf-tag-green">{f.total_time_ms.toFixed(1)} ms total</span>
+                    <span className="pf-tag pf-tag-amber">depth {f.max_recursion_depth ?? 1}</span>
+                  </div>
+                </div>
+                <ChevronRight size={14} className="pf-fn-arrow" />
+              </div>
+            ))}
+          </div>
+        </div>
       )}
+
     </div>
   )
 }
