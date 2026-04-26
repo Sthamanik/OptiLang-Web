@@ -1,5 +1,4 @@
 from pydantic_settings import BaseSettings
-from typing import List
 
 
 class Settings(BaseSettings):
@@ -18,17 +17,14 @@ class Settings(BaseSettings):
     mongodb_uri: str = "mongodb+srv://username:password@cluster.mongodb.net/optilang?retryWrites=true&w=majority"
     database_name: str = "optilang"
     
-    # CORS
-    cors_origins: List[str] = [
-        "http://localhost:3000",
-        "http://localhost:5000",
-    ]
-    
     # Code Execution Limits
     max_execution_time: int = 5  # seconds
     max_code_length: int = 10000  # characters
     max_memory_mb: int = 128  # megabytes
     
+    # Internal service auth
+    internal_api_secret: str = "change-this-interpreter-secret-in-production"
+
     # Rate Limiting
     rate_limit_per_minute: int = 30
     

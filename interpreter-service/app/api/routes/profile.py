@@ -33,7 +33,7 @@ async def profile_code(request: ExecuteRequest) -> ProfileResponse:
             errors=result.errors,
             execution_time=result.execution_time,
             profiling=serialize_profiling(result.profiling),
-            timestamp=datetime.now(datetime.timezone.utc),
+            timestamp=datetime.now(timezone.utc),
         )
     except Exception as exc:
         logger.error("Profile error: %s", exc, exc_info=True)

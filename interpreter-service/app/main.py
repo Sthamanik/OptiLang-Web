@@ -1,6 +1,11 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import settings
+import logging
+from asyncio import Lock
+from collections import deque
+from time import monotonic
+
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
+
 from app.api.routes import (
     analysis_router,
     execution_router,
@@ -10,7 +15,7 @@ from app.api.routes import (
     profile_router,
     score_router,
 )
-import logging
+from app.core.config import settings
 
 # Configure logging
 logging.basicConfig(
@@ -19,6 +24,9 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+
+UNPROTECTED_PATHS = {"/health"}
+DOCS_PATH_PREFIXES = ("/docs", "/redoc", "/openapi.json")
 
 
 def create_app() -> FastAPI:
@@ -37,15 +45,49 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",
         openapi_url="/openapi.json"
     )
-    
-    # CORS middleware
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.cors_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+
+    app.state.request_timestamps = deque()
+    app.state.rate_limit_lock = Lock()
+    app.state.rate_limit_window_seconds = 60
+
+    @app.middleware("http")
+    async def protect_interpreter_service(request: Request, call_next):
+        path = request.url.path
+
+        if path in UNPROTECTED_PATHS or path.startswith(DOCS_PATH_PREFIXES):
+            return await call_next(request)
+
+        shared_secret = request.headers.get("X-Internal-Service-Secret")
+        if shared_secret != settings.internal_api_secret:
+            return JSONResponse(
+                status_code=status.HTTP_403_FORBIDDEN,
+                content={"detail": "Forbidden"},
+            )
+
+        now = monotonic()
+        timestamps = app.state.request_timestamps
+        rate_limit_lock = app.state.rate_limit_lock
+        window = app.state.rate_limit_window_seconds
+
+        async with rate_limit_lock:
+            while timestamps and now - timestamps[0] >= window:
+                timestamps.popleft()
+
+            if len(timestamps) >= settings.rate_limit_per_minute:
+                retry_after = max(1, int(window - (now - timestamps[0])))
+                return JSONResponse(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    headers={"Retry-After": str(retry_after)},
+                    content={
+                        "detail": (
+                            "Interpreter rate limit exceeded. "
+                            "Please retry shortly."
+                        )
+                    },
+                )
+
+            timestamps.append(now)
+        return await call_next(request)
     
     # Include routers
     app.include_router(analysis_router)
@@ -61,7 +103,10 @@ def create_app() -> FastAPI:
         """Actions to perform on application startup."""
         logger.info(f"{settings.app_name} v{settings.version} starting up...")
         logger.info(f"Debug mode: {settings.debug}")
-        logger.info(f"CORS origins: {settings.cors_origins}")
+        logger.info(
+            "Global interpreter rate limit: %s requests/minute",
+            settings.rate_limit_per_minute,
+        )
     
     @app.on_event("shutdown")
     async def shutdown_event():

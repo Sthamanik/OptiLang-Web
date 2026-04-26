@@ -4,7 +4,10 @@ import { config } from "@config/env.js";
 const interpreterClient = axios.create({
   baseURL: config.interpreter.url,
   timeout: config.interpreter.timeout,
-  headers: { "Content-Type": "application/json" },
+  headers: {
+    "Content-Type": "application/json",
+    "X-Internal-Service-Secret": config.interpreter.sharedSecret,
+  },
 });
 
 export interface TokenResponseItem {
@@ -137,8 +140,11 @@ export interface TokenizeResult {
   timestamp: string;
 }
 
-export interface ParseResult extends TokenizeResult {
+export interface ParseResult {
+  success: boolean;
   ast: Record<string, unknown> | null;
+  errors: string[];
+  timestamp: string;
 }
 
 function buildPayload(
@@ -214,7 +220,7 @@ export const analyzeCode = async (
 
 export const tokenizeCode = async (
   code: string,
-  userId?: string
+  userId?: string,
 ): Promise<TokenizeResult> => {
   const { data } = await interpreterClient.post<TokenizeResult>("/tokenize", {
     code,
@@ -225,7 +231,7 @@ export const tokenizeCode = async (
 
 export const parseCode = async (
   code: string,
-  userId?: string
+  userId?: string,
 ): Promise<ParseResult> => {
   const { data } = await interpreterClient.post<ParseResult>("/parse", {
     code,

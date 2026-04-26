@@ -6,9 +6,7 @@ export const config = {
   nodeEnv: process.env.NODE_ENV || "development",
 
   mongodb: {
-    uri:
-      process.env.MONGODB_URI ||
-      "mongodb://localhost:27017/optilang",
+    uri: process.env.MONGODB_URI || "mongodb://localhost:27017/optilang",
     dbName: process.env.DB_NAME || "Optilang",
   },
 
@@ -26,6 +24,9 @@ export const config = {
   interpreter: {
     url: process.env.INTERPRETER_URL || "http://localhost:8000",
     timeout: Number(process.env.INTERPRETER_TIMEOUT) || 35000,
+    sharedSecret:
+      process.env.INTERPRETER_SHARED_SECRET ||
+      "change-this-interpreter-secret-in-production",
   },
 
   cors: {

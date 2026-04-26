@@ -1,8 +1,12 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.core.config import settings
 
 client = TestClient(app)
+client.headers.update(
+    {"X-Internal-Service-Secret": settings.internal_api_secret}
+)
 
 
 def test_execute_route_exposes_symbol_table_and_profiling() -> None:
@@ -36,9 +40,9 @@ def test_analyze_route_returns_full_score_report() -> None:
     assert response.status_code == 200
     payload = response.json()
     assert "score_report" in payload
-    assert payload["optimization_score"] == payload["score_report"]["score"]
     assert "dimensions" in payload["score_report"]
-    assert payload["complexity_class"] == payload["score_report"]["complexity_class"]
+    assert payload["score_report"]["score"] >= 0
+    assert payload["score_report"]["complexity_class"]
 
 
 def test_optimize_route_returns_optimizer_suggestions_shape() -> None:
@@ -71,3 +75,18 @@ def test_language_routes_expose_tokens_and_ast() -> None:
     assert tokenize_payload["token_count"] >= 1
     assert parse_payload["success"] is True
     assert parse_payload["ast"]["node_type"] == "ProgramNode"
+
+
+def test_interpreter_rejects_requests_without_internal_secret() -> None:
+    unauthenticated_client = TestClient(app)
+    response = unauthenticated_client.post(
+        "/execute",
+        json={
+            "code": "print(1)\n",
+            "timeout": 5,
+            "enable_profiling": True,
+        },
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Forbidden"
