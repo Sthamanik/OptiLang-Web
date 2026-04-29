@@ -45,6 +45,7 @@ export interface ScoreReport {
   score: number
   grade: 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Critical'
   complexity_class: string
+  breakdown: ScoreBreakdown
   dimensions: DimensionScores
   narrative: string
   error_count: number
