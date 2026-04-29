@@ -1,3 +1,5 @@
+import type { ScoreBreakdown } from ".";
+
 export interface Suggestion {
   line: number;
   pattern: string;
@@ -7,11 +9,16 @@ export interface Suggestion {
   impact_score: number;
 }
 
-export interface ScoreBreakdown {
-  severity_penalty: number;
-  complexity_penalty: number;
-  performance_penalty: number;
-  memory_penalty: number;
+export interface ScoreReport {
+  score: number;
+  grade: string;
+  complexity_class: string;
+  breakdown: ScoreBreakdown;  // ADD THIS LINE
+  dimensions: DimensionScores;
+  narrative: string;
+  error_count: number;
+  lines_profiled: number;
+  cv: number;
 }
 
 export interface DimensionScores {
