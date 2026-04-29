@@ -38,11 +38,11 @@ Grade       : ${score?.grade ?? 'N/A'}
 Complexity  : ${score?.complexity_class ?? profiling?.complexity_estimate ?? 'N/A'}
 Time        : ${executionTimeMs != null ? `${executionTimeMs.toFixed(2)} ms` : 'N/A'}
 ${score ? `
-Breakdown:
-  Severity penalty    : -${score.breakdown.severity_penalty.toFixed(2)}
-  Complexity penalty  : -${score.breakdown.complexity_penalty.toFixed(2)}
-  Performance penalty : -${score.breakdown.performance_penalty.toFixed(2)}
-  Memory penalty      : -${score.breakdown.memory_penalty.toFixed(2)}` : ''}
+Score breakdown:
+  Correctness         : ${score.dimensions?.correctness?.toFixed(1) ?? 'N/A'} / 35
+  Efficiency & Cmplx  : ${score.dimensions?.efficiency_complexity?.toFixed(1) ?? 'N/A'} / 30
+  Quality             : ${score.dimensions?.quality?.toFixed(1) ?? 'N/A'} / 20
+  Maintainability     : ${score.dimensions?.maintainability?.toFixed(1) ?? 'N/A'} / 15` : ''}
 
 PROFILING
 ${line}

@@ -41,18 +41,6 @@ export interface ScoreBreakdown {
   memory_penalty: number
 }
 
-export interface ScoreReport {
-  score: number
-  grade: 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Critical'
-  complexity_class: string
-  breakdown: ScoreBreakdown
-  dimensions: DimensionScores
-  narrative: string
-  error_count: number
-  lines_profiled: number
-  cv: number
-}
-
 export interface DimensionScores {
   correctness: number
   efficiency_complexity: number
@@ -62,6 +50,20 @@ export interface DimensionScores {
   efficiency_subscore: number
   profiling_partial: boolean
   optimizer_partial: boolean
+}
+
+export interface ScoreReport {
+  score: number
+  grade: 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Critical'
+  complexity_class: string
+  breakdown?: ScoreBreakdown      // optional — old backend
+  dimensions?: DimensionScores    // new backend
+  narrative?: string              // new backend
+  error_count?: number
+  lines_profiled?: number
+  cv?: number
+  max_execution_count?: number
+  baseline_time_ms?: number
 }
 
 // ── Matches optilang/models.py ────────────────────────────────────────────────

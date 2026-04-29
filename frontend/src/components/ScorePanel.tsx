@@ -1,28 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Award, TrendingDown, BarChart2 } from 'lucide-react'
-import type { Suggestion } from '@/types'
-
-export interface DimensionScores {
-  correctness: number
-  efficiency_complexity: number
-  quality: number
-  maintainability: number
-  complexity_subscore: number
-  efficiency_subscore: number
-  profiling_partial: boolean
-  optimizer_partial: boolean
-}
-
-export interface ScoreReport {
-  score: number
-  grade: string
-  complexity_class: string
-  dimensions: DimensionScores
-  narrative: string
-  error_count: number
-  lines_profiled: number
-  cv: number
-}
+import type { ScoreReport, DimensionScores, Suggestion } from '@/types'
 
 interface Props {
   score: ScoreReport | null
@@ -31,50 +9,47 @@ interface Props {
 
 const gradeColor: Record<string, string> = {
   Excellent: '#9461ff',
-  Good: '#a78bfa',
-  Fair: '#ffcb6b',
-  Poor: '#ef9f27',
-  Critical: '#e24b4a',
+  Good:      '#a78bfa',
+  Fair:      '#ffcb6b',
+  Poor:      '#ef9f27',
+  Critical:  '#e24b4a',
 }
 
 const severityMeta = {
-  high: { label: 'High', cls: 'sev-high' },
+  high:   { label: 'High',   cls: 'sev-high'   },
   medium: { label: 'Medium', cls: 'sev-medium' },
-  low: { label: 'Low', cls: 'sev-low' },
+  low:    { label: 'Low',    cls: 'sev-low'    },
 }
 
 const DIMENSIONS = [
-  { key: 'correctness', label: 'Correctness', max: 35 },
+  { key: 'correctness',           label: 'Correctness',        max: 35 },
   { key: 'efficiency_complexity', label: 'Efficiency & Cmplx', max: 30 },
-  { key: 'quality', label: 'Quality', max: 20 },
-  { key: 'maintainability', label: 'Maintainability', max: 15 },
+  { key: 'quality',               label: 'Quality',            max: 20 },
+  { key: 'maintainability',       label: 'Maintainability',    max: 15 },
 ]
 
 // ── Animated score ring ───────────────────────────────────────────────────────
 function ScoreRing({ score, color, grade }: { score: number; color: string; grade: string }) {
   const circumference = 2 * Math.PI * 44
-  const targetOffset = circumference * (1 - score / 100)
-  const circleRef = useRef<SVGCircleElement>(null)
-  const glowRef = useRef<SVGCircleElement>(null)
+  const targetOffset  = circumference * (1 - score / 100)
+  const circleRef     = useRef<SVGCircleElement>(null)
+  const glowRef       = useRef<SVGCircleElement>(null)
 
   useEffect(() => {
-    const el = circleRef.current
+    const el   = circleRef.current
     const glow = glowRef.current
     if (!el) return
 
     el.style.strokeDashoffset = String(circumference)
-    el.style.transition = 'none'
-    if (glow) {
-      glow.style.strokeDashoffset = String(circumference)
-      glow.style.transition = 'none'
-    }
+    el.style.transition       = 'none'
+    if (glow) { glow.style.strokeDashoffset = String(circumference); glow.style.transition = 'none' }
     void el.getBoundingClientRect()
 
     requestAnimationFrame(() => {
-      el.style.transition = 'stroke-dashoffset 1.4s cubic-bezier(0.4, 0, 0.2, 1)'
+      el.style.transition       = 'stroke-dashoffset 1.4s cubic-bezier(0.4, 0, 0.2, 1)'
       el.style.strokeDashoffset = String(targetOffset)
       if (glow) {
-        glow.style.transition = 'stroke-dashoffset 1.4s cubic-bezier(0.4, 0, 0.2, 1)'
+        glow.style.transition       = 'stroke-dashoffset 1.4s cubic-bezier(0.4, 0, 0.2, 1)'
         glow.style.strokeDashoffset = String(targetOffset)
       }
     })
@@ -96,22 +71,17 @@ function ScoreRing({ score, color, grade }: { score: number; color: string; grad
         <circle
           ref={glowRef}
           cx="55" cy="55" r="44"
-          fill="none"
-          stroke={color}
-          strokeWidth="9"
+          fill="none" stroke={color} strokeWidth="9"
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={circumference}
           transform="rotate(-90 55 55)"
-          opacity="0.3"
-          filter="url(#glow)"
+          opacity="0.3" filter="url(#glow)"
         />
         <circle
           ref={circleRef}
           cx="55" cy="55" r="44"
-          fill="none"
-          stroke={color}
-          strokeWidth="9"
+          fill="none" stroke={color} strokeWidth="9"
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={circumference}
@@ -135,18 +105,18 @@ function BreakdownRow({ label, pct, val, max }: {
   const barColor = pct >= 75
     ? 'linear-gradient(90deg, #1d9e75, #3dd0a5)'
     : pct >= 45
-      ? 'linear-gradient(90deg, #ef9f27, #ffcb6b)'
-      : 'linear-gradient(90deg, #e24b4a, #ff6b6b)'
+    ? 'linear-gradient(90deg, #ef9f27, #ffcb6b)'
+    : 'linear-gradient(90deg, #e24b4a, #ff6b6b)'
 
   useEffect(() => {
     const el = fillRef.current
     if (!el) return
-    el.style.width = '0%'
+    el.style.width      = '0%'
     el.style.transition = 'none'
     void el.getBoundingClientRect()
     requestAnimationFrame(() => {
       el.style.transition = 'width 1.1s cubic-bezier(0.4, 0, 0.2, 1)'
-      el.style.width = `${pct}%`
+      el.style.width      = `${pct}%`
     })
   }, [pct])
 
@@ -184,6 +154,9 @@ export default function ScorePanel({ score, suggestions }: Props) {
       ({ high: 0, medium: 1, low: 2 }[b.severity] ?? 2),
   )
 
+  // Safe dimensions access — fallback to empty object if not present
+  const dims = score.dimensions ?? {} as DimensionScores
+
   return (
     <div className="panel-body score-body">
 
@@ -200,24 +173,24 @@ export default function ScorePanel({ score, suggestions }: Props) {
         <p className="score-narrative">{score.narrative}</p>
       )}
 
-      {/* Breakdown */}
+      {/* Score breakdown — uses dimensions from new backend */}
       <p className="section-label" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
         <BarChart2 size={12} /> Score breakdown
       </p>
       <div className="breakdown-list">
         {DIMENSIONS.map(({ key, label, max }) => {
-          const val = (score.dimensions[key as keyof DimensionScores] as number) ?? 0
+          const val = (dims[key as keyof DimensionScores] as number) ?? 0
           const pct = Math.min((val / max) * 100, 100)
           return <BreakdownRow key={key} label={label} pct={pct} val={val} max={max} />
         })}
       </div>
 
       {/* Partial credit warning */}
-      {(score.dimensions.profiling_partial || score.dimensions.optimizer_partial) && (
+      {(dims.profiling_partial || dims.optimizer_partial) && (
         <div className="partial-note">
           ⚠ Partial credit applied —{' '}
-          {score.dimensions.profiling_partial && 'profiling unavailable. '}
-          {score.dimensions.optimizer_partial && 'optimizer unavailable.'}
+          {dims.profiling_partial && 'profiling unavailable. '}
+          {dims.optimizer_partial && 'optimizer unavailable.'}
         </div>
       )}
 
@@ -230,7 +203,7 @@ export default function ScorePanel({ score, suggestions }: Props) {
           </p>
           <div className="suggestion-list">
             {sorted.map((s, i) => {
-              const meta = severityMeta[s.severity as keyof typeof severityMeta]
+              const meta = severityMeta[s.severity as keyof typeof severityMeta] ?? severityMeta.low
               return (
                 <div key={i} className={`suggestion-card ${meta.cls}`}>
                   <div className="suggestion-header">
