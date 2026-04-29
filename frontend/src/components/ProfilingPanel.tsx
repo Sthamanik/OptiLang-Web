@@ -14,6 +14,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip)
 
 interface Props {
   profiling: ProfilingData | null
+  score?: { complexity_class: string } | null
 }
 
 function heatColor(avgMs: number): string {
@@ -45,7 +46,7 @@ function AnimatedHeatBar({ pct, color }: { pct: number; color: string }) {
   )
 }
 
-export default function ProfilingPanel({ profiling }: Props) {
+export default function ProfilingPanel({ profiling, score }: Props) {
   if (!profiling) {
     return (
       <div className="placeholder">
@@ -110,7 +111,9 @@ export default function ProfilingPanel({ profiling }: Props) {
         <div className="stat-card">
           <Flame size={14} className="stat-icon red" />
           <span className="stat-label">Complexity</span>
-          <span className="stat-value">{profiling.complexity_estimate}</span>
+          <span className="stat-value">
+            {score?.complexity_class ?? profiling.complexity_estimate}
+          </span>
         </div>
         <div className="stat-card">
           <Activity size={14} className="stat-icon purple" />

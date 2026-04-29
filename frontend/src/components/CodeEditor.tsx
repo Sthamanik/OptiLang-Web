@@ -146,19 +146,6 @@ export default function CodeEditor({
     const model = editor.getModel()
     if (!model) return
 
-    const suggMarkers: Monaco.editor.IMarkerData[] = suggestions.map((s) => ({
-      severity:
-        s.severity === 'high'
-          ? monaco.MarkerSeverity.Warning
-          : monaco.MarkerSeverity.Hint,
-      startLineNumber: s.line,
-      endLineNumber:   s.line,
-      startColumn:     1,
-      endColumn:       model.getLineMaxColumn(s.line),
-      message: `[${s.pattern}] ${s.description}\n💡 ${s.suggestion}`,
-      source: 'OptiLang',
-    }))
-
     // Parse "Line N" from error strings for error markers
     const errMarkers: Monaco.editor.IMarkerData[] = errors
       .map((msg) => {
@@ -175,7 +162,7 @@ export default function CodeEditor({
         }
       })
 
-    monaco.editor.setModelMarkers(model, 'optilang', [...suggMarkers, ...errMarkers])
+    monaco.editor.setModelMarkers(model, 'optilang', errMarkers)
   }, [suggestions, errors])
 
   useEffect(() => { applyDecorations() }, [applyDecorations])
