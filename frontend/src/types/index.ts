@@ -45,10 +45,22 @@ export interface ScoreReport {
   score: number
   grade: 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Critical'
   complexity_class: string
-  breakdown: ScoreBreakdown
-  max_execution_count: number
+  dimensions: DimensionScores
+  narrative: string
+  error_count: number
   lines_profiled: number
-  baseline_time_ms: number
+  cv: number
+}
+
+export interface DimensionScores {
+  correctness: number
+  efficiency_complexity: number
+  quality: number
+  maintainability: number
+  complexity_subscore: number
+  efficiency_subscore: number
+  profiling_partial: boolean
+  optimizer_partial: boolean
 }
 
 // ── Matches optilang/models.py ────────────────────────────────────────────────

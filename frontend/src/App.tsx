@@ -1,20 +1,20 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Play, Loader2, Zap, History, Keyboard, Download, WrapText, PanelLeft } from 'lucide-react'
-import CodeEditor        from '@/components/CodeEditor'
-import EditorTabs        from '@/components/EditorTabs'
-import OutputPanel       from '@/components/OutputPanel'
-import ProfilingPanel    from '@/components/ProfilingPanel'
+import CodeEditor from '@/components/CodeEditor'
+import EditorTabs from '@/components/EditorTabs'
+import OutputPanel from '@/components/OutputPanel'
+import ProfilingPanel from '@/components/ProfilingPanel'
 import ScorePanel from '@/components/ScorePanel'
 import type { ScoreReport } from '@/types'
-import HistoryPanel      from '@/components/HistoryPanel'
-import NameModal         from '@/components/NameModal'
+import HistoryPanel from '@/components/HistoryPanel'
+import NameModal from '@/components/NameModal'
 import KeyboardShortcuts from '@/components/KeyboardShortcuts'
-import ThemeSwitcher     from '@/components/ThemeSwitcher'
-import ExportReport      from '@/components/ExportReport'
-import AuthModal         from '@/components/AuthModal'
-import { executeCode }   from '@/services/api'
+import ThemeSwitcher from '@/components/ThemeSwitcher'
+import ExportReport from '@/components/ExportReport'
+import AuthModal from '@/components/AuthModal'
+import { executeCode } from '@/services/api'
 import { useStore, applyTheme, type HistoryEntry, GUEST_MAX_RUNS, GUEST_FULL_RESULTS } from '@/store/useStore'
-import { formatCode }    from '@/utils/formatter'
+import { formatCode } from '@/utils/formatter'
 import './App.css'
 
 type ResultTab = 'output' | 'profiling' | 'score'
@@ -37,20 +37,20 @@ export default function App() {
     setResult, clearResult,
     historyOpen, toggleHistory,
     addToHistory,
-    nameModalOpen,  openNameModal,  closeNameModal,
-    shortcutsOpen,  openShortcuts,  closeShortcuts,
-    exportOpen,     openExport,     closeExport,
+    nameModalOpen, openNameModal, closeNameModal,
+    shortcutsOpen, openShortcuts, closeShortcuts,
+    exportOpen, openExport, closeExport,
     // Auth
     user, guestRunCount,
     authModalOpen, authModalTab,
     openAuthModal, closeAuthModal,
-    incrementGuestRun, canRun, guestFullResults,
+    guestFullResults,
     logout,
   } = useStore()
 
-  const code         = activeCode()
+  const code = activeCode()
   const activeTabObj = tabs.find(t => t.id === activeTabId)
-  const hasErrors    = errors.length > 0
+  const hasErrors = errors.length > 0
 
   // ── Run button feedback state ─────────────────────────────────────────────
   // 'idle' | 'running' | 'success' | 'error'
@@ -66,8 +66,8 @@ export default function App() {
 
   // ── Run code ──────────────────────────────────────────────────────────────
   const runCode = useCallback(async (runName: string) => {
-    const state        = useStore.getState()
-    const currentCode  = state.activeCode()
+    const state = useStore.getState()
+    const currentCode = state.activeCode()
     const currentTabId = state.activeTabId
 
     // Guest limit — block if 5 runs used
@@ -114,16 +114,16 @@ export default function App() {
       }
 
       const entry: HistoryEntry = {
-        id:              `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        name:            runName,
-        code:            currentCode,
-        output:          d.output,
-        errors:          d.errors,
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        name: runName,
+        code: currentCode,
+        output: d.output,
+        errors: d.errors,
         executionTimeMs: d.execution_time_ms,
-        score:           d.score?.score            ?? null,
-        grade:           d.score?.grade            ?? null,
-        complexity:      d.score?.complexity_class ?? null,
-        timestamp:       new Date().toISOString(),
+        score: d.score?.score ?? null,
+        grade: d.score?.grade ?? null,
+        complexity: d.score?.complexity_class ?? null,
+        timestamp: new Date().toISOString(),
       }
       addToHistory(entry)
 
@@ -170,21 +170,21 @@ export default function App() {
   // ── Global keyboard shortcuts ─────────────────────────────────────────────
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      const ctrl  = e.ctrlKey || e.metaKey
+      const ctrl = e.ctrlKey || e.metaKey
       const shift = e.shiftKey
 
-      if (ctrl && e.key === 'Enter')              { e.preventDefault(); handleRunClick() }
-      if (e.altKey && shift && e.key === 'F')     { e.preventDefault(); handleFormat() }
-      if (ctrl && !shift && e.key === 'Tab')      { e.preventDefault(); nextTab() }
-      if (ctrl && shift  && e.key === 'Tab')      { e.preventDefault(); prevTab() }
-      if (ctrl && e.key >= '1' && e.key <= '9')  { e.preventDefault(); switchTabByIndex(parseInt(e.key) - 1) }
-      if (ctrl && e.key === 't')                  { e.preventDefault(); useStore.getState().addTab() }
-      if (ctrl && e.key === 'w')                  { e.preventDefault(); useStore.getState().closeTab(activeTabId) }
-      if (ctrl && e.key === 'b')                  { e.preventDefault(); toggleSidebar() }
-      if (ctrl && e.key === 'h')                  { e.preventDefault(); toggleHistory() }
-      if (ctrl && e.key === 'k')                  { e.preventDefault(); shortcutsOpen ? closeShortcuts() : openShortcuts() }
-      if (ctrl && e.key === 'e')                  { e.preventDefault(); if (!hasErrors) { exportOpen ? closeExport() : openExport() } }
-      if (e.key === 'Escape')                     { closeShortcuts(); closeExport(); closeNameModal(); closeAuthModal() }
+      if (ctrl && e.key === 'Enter') { e.preventDefault(); handleRunClick() }
+      if (e.altKey && shift && e.key === 'F') { e.preventDefault(); handleFormat() }
+      if (ctrl && !shift && e.key === 'Tab') { e.preventDefault(); nextTab() }
+      if (ctrl && shift && e.key === 'Tab') { e.preventDefault(); prevTab() }
+      if (ctrl && e.key >= '1' && e.key <= '9') { e.preventDefault(); switchTabByIndex(parseInt(e.key) - 1) }
+      if (ctrl && e.key === 't') { e.preventDefault(); useStore.getState().addTab() }
+      if (ctrl && e.key === 'w') { e.preventDefault(); useStore.getState().closeTab(activeTabId) }
+      if (ctrl && e.key === 'b') { e.preventDefault(); toggleSidebar() }
+      if (ctrl && e.key === 'h') { e.preventDefault(); toggleHistory() }
+      if (ctrl && e.key === 'k') { e.preventDefault(); shortcutsOpen ? closeShortcuts() : openShortcuts() }
+      if (ctrl && e.key === 'e') { e.preventDefault(); if (!hasErrors) { exportOpen ? closeExport() : openExport() } }
+      if (e.key === 'Escape') { closeShortcuts(); closeExport(); closeNameModal(); closeAuthModal() }
     },
     [
       handleRunClick, handleFormat,
@@ -198,9 +198,9 @@ export default function App() {
 
   // ── Result tabs — hide profiling+score on errors OR guest past limit ──────
   const resultTabs: { id: ResultTab; label: string; count?: number; disabled?: boolean; hidden?: boolean }[] = [
-    { id: 'output',    label: 'Output',    count: errors.length || undefined },
+    { id: 'output', label: 'Output', count: errors.length || undefined },
     { id: 'profiling', label: 'Profiling', disabled: !profiling, hidden: hasErrors || !showFullResults },
-    { id: 'score',     label: 'Score',     disabled: !score,     hidden: hasErrors || !showFullResults },
+    { id: 'score', label: 'Score', disabled: !score, hidden: hasErrors || !showFullResults },
   ]
 
   return (
@@ -219,9 +219,9 @@ export default function App() {
         defaultTab={authModalTab}
       />
       <ExportReport
-        isOpen={exportOpen}  onClose={closeExport}
+        isOpen={exportOpen} onClose={closeExport}
         runName={lastRunName} code={code}
-        output={output}      errors={errors}
+        output={output} errors={errors}
         executionTimeMs={executionTimeMs}
         profiling={profiling} score={score} suggestions={suggestions}
       />
@@ -318,8 +318,8 @@ export default function App() {
           >
             {runStatus === 'running' && <><Loader2 size={14} className="spin" /> Running…</>}
             {runStatus === 'success' && <><span className="run-flash">✓</span> Done!</>}
-            {runStatus === 'error'   && <><span className="run-flash">✗</span> Error</>}
-            {runStatus === 'idle'    && <><Play size={14} /> Run</>}
+            {runStatus === 'error' && <><span className="run-flash">✗</span> Error</>}
+            {runStatus === 'idle' && <><Play size={14} /> Run</>}
           </button>
         </div>
       </header>
@@ -401,9 +401,9 @@ export default function App() {
           </div>
 
           <div className="tab-content">
-            {activeTab === 'output'    && <OutputPanel    output={output} errors={errors} executionTimeMs={executionTimeMs} isRunning={isRunning} />}
+            {activeTab === 'output' && <OutputPanel output={output} errors={errors} executionTimeMs={executionTimeMs} isRunning={isRunning} />}
             {activeTab === 'profiling' && <ProfilingPanel profiling={profiling} score={typedScore} />}
-            {activeTab === 'score'     && <ScorePanel score={typedScore} suggestions={suggestions} />}
+            {activeTab === 'score' && <ScorePanel score={typedScore} suggestions={suggestions} />}
           </div>
         </section>
 

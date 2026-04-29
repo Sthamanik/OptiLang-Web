@@ -4,12 +4,6 @@
  * to produce properly formatted PyLite code.
  */
 
-// Keywords that start a block (need a colon at end)
-const BLOCK_STARTERS = ['if', 'elif', 'else', 'while', 'for', 'def', 'try', 'except', 'finally']
-
-// Operators that need spaces around them
-const BINARY_OPS = ['==', '!=', '<=', '>=', '+=', '-=', '*=', '/=', '//', '**', '+', '-', '*', '/', '%', '=', '<', '>']
-
 /**
  * Add spaces around operators, but skip strings and comments
  */
@@ -20,7 +14,7 @@ function spacingAroundOps(line: string): string {
 
   // Protect string contents — replace with placeholders
   const strings: string[] = []
-  let result = line.replace(/(["'])(?:(?!\1)[^\\]|\\.)*\1/g, (match) => {
+  let result = line.replace(/(["\''])(?:(?!\1)[^\\]|\\.)*\1/g, (match) => {
     strings.push(match)
     return `__STR${strings.length - 1}__`
   })
@@ -67,7 +61,6 @@ export function formatCode(source: string): string {
   const lines = source.split('\n')
   const output: string[] = []
   let prevWasBlank = false
-  let prevWasDef = false
 
   for (let i = 0; i < lines.length; i++) {
     const raw = lines[i]
@@ -105,7 +98,7 @@ export function formatCode(source: string): string {
 
     // Clean up multiple spaces inside (but not in strings)
     const strings2: string[] = []
-    let cleaned = formatted.replace(/(["'])(?:(?!\1)[^\\]|\\.)*\1/g, (m) => {
+    let cleaned = formatted.replace(/(["\''])(?:(?!\1)[^\\]|\\.)*\1/g, (m) => {
       strings2.push(m)
       return `__S${strings2.length - 1}__`
     })
@@ -114,7 +107,6 @@ export function formatCode(source: string): string {
     formatted = cleaned
 
     output.push(indent + formatted)
-    prevWasDef = isDefLine
   }
 
   // Remove trailing blank lines
