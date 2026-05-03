@@ -86,8 +86,8 @@ export default function CodeEditor({
   suggestions,
   errors,
 }: CodeEditorProps) {
-  const editorRef  = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null)
-  const monacoRef  = useRef<typeof Monaco | null>(null)
+  const editorRef  = useRef<any>(null)
+  const monacoRef  = useRef<any>(null)
   const decorIds   = useRef<string[]>([])
 
   const handleBeforeMount: BeforeMount = (monaco) => {
@@ -113,7 +113,7 @@ export default function CodeEditor({
       return
     }
 
-    const newDecs: Monaco.editor.IModelDeltaDecoration[] = entries.map(
+    const newDecs: any[] = entries.map(
       ([lineStr, stat]) => {
         const line = Number(lineStr)
         return {
