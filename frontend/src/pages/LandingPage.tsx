@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, useInView, useAnimation } from 'framer-motion'
+import { motion, useInView } from 'framer-motion'
 import './LandingPage.css'
 
 // ── Cursor ────────────────────────────────────────────────────────────────────
@@ -214,7 +214,7 @@ function Pipeline() {
       astLayer.appendChild(el)
       astEls.set(node.id, el)
     })
-    AST_EDGES.forEach(([from, to], idx) => {
+    AST_EDGES.forEach(([from, to]) => {
       const a = AST_NODES.find(n => n.id === from)!
       const b = AST_NODES.find(n => n.id === to)!
       const line = document.createElementNS('http://www.w3.org/2000/svg','line')

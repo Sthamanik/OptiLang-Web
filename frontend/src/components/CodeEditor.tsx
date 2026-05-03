@@ -1,11 +1,12 @@
 import { useRef, useEffect, useCallback } from 'react'
 import MonacoEditor, { type OnMount, type BeforeMount } from '@monaco-editor/react'
-import type * as Monaco from 'monaco-editor'
+// monaco types come from the BeforeMount/OnMount callbacks — no direct import needed
 import type { LineStats, Suggestion } from '@/types'
 
 // ── Register PyLite language once ────────────────────────────────────────────
-function registerPyLite(monaco: typeof Monaco) {
-  if (monaco.languages.getLanguages().some((l) => l.id === 'pylite')) return
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function registerPyLite(monaco: any) {
+  if (monaco.languages.getLanguages().some((l: { id: string }) => l.id === 'pylite')) return
 
   monaco.languages.register({ id: 'pylite' })
 
@@ -147,7 +148,7 @@ export default function CodeEditor({
     if (!model) return
 
     // Parse "Line N" from error strings for error markers
-    const errMarkers: Monaco.editor.IMarkerData[] = errors
+    const errMarkers: any[] = errors
       .map((msg) => {
         const match = msg.match(/[Ll]ine\s+(\d+)/);
         const line = match ? Number(match[1]) : 1
