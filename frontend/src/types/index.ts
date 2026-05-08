@@ -1,6 +1,6 @@
 // ── Profiling ─────────────────────────────────────────────────────────────────
 export interface LineStats {
-  line?:            number | null
+  line:             number          // line number (always present from backend)
   count:            number
   total_time_ms:    number
   avg_time_ms:      number

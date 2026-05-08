@@ -17,3 +17,20 @@ export async function executeCode(
   )
   return data
 }
+
+// ── Auth stubs — used by useStore (wired to real backend when MongoDB is ready)
+export async function loginUser(
+  _email: string, _pass: string
+): Promise<ApiResponse<{ user: { _id:string; name:string; email:string } }>> {
+  throw new Error('Backend not connected — using localStorage auth')
+}
+
+export async function registerUser(
+  _name: string, _email: string, _pass: string
+): Promise<ApiResponse<{ user: { _id:string; name:string; email:string } }>> {
+  throw new Error('Backend not connected — using localStorage auth')
+}
+
+export async function logoutUser(): Promise<void> {
+  // no-op until backend is connected
+}

@@ -55,7 +55,7 @@ export default function ProfilingPanel({ profiling, score }: Props) {
     )
   }
 
-  const entries = Object.values(profiling.line_stats).sort((a, b) => a.line - b.line)
+  const entries = Object.values(profiling.line_stats).sort((a, b) => (a.line ?? 0) - (b.line ?? 0))
   const hottest = [...entries].sort((a, b) => b.avg_time_ms - a.avg_time_ms).slice(0, 5)
   const maxAvg  = hottest[0]?.avg_time_ms ?? 1
 

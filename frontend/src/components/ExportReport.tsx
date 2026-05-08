@@ -76,7 +76,7 @@ OPTIMIZATION SUGGESTIONS
 ${line}
 ${suggestions.length > 0
     ? suggestions.map(s =>
-        `  [${s.severity.toUpperCase()}] Line ${s.line} — ${s.description}\n  Fix: ${s.suggestion}`
+        `  [${s.severity.toUpperCase()}] Line ${s.line ?? '?'} — ${s.description}\n  Fix: ${s.suggestion}`
       ).join('\n\n')
     : '  No suggestions — clean code!'}
 
