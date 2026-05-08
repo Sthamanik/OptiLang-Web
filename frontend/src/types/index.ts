@@ -1,103 +1,105 @@
-// ── Matches optilang/profiler.py ─────────────────────────────────────────────
-
+// ── Profiling ─────────────────────────────────────────────────────────────────
 export interface LineStats {
-  line: number
-  count: number
-  total_time_ms: number
-  avg_time_ms: number
-  min_time_ms: number
-  max_time_ms: number
-  memory_vars: number
-  memory_bytes: number
+  line?:            number | null
+  count:            number
+  total_time_ms:    number
+  avg_time_ms:      number
+  min_time_ms:      number
+  max_time_ms:      number
+  memory_vars:      number
+  memory_bytes:     number
 }
 
 export interface FunctionStats {
-  name: string
-  calls: number
-  total_time_ms: number
-  avg_time_ms: number
-  min_time_ms: number
-  max_time_ms: number
+  name?:               string | null
+  calls:               number
+  total_time_ms:       number
+  avg_time_ms:         number
+  min_time_ms:         number
+  max_time_ms:         number
   max_recursion_depth: number
-  callers: Record<string, number>
+  callers:             Record<string, number>
 }
 
 export interface ProfilingData {
-  line_stats: Record<string, LineStats>   // key = line number as string
-  function_stats: Record<string, FunctionStats>
-  total_time_ms: number
+  line_stats:           Record<string, LineStats>
+  function_stats:       Record<string, FunctionStats>
+  total_time_ms:        number
   total_lines_executed: number
-  lines_profiled: number
-  peak_memory_bytes: number
-  complexity_estimate: string
+  total_lines:          number
+  lines_profiled:       number
+  peak_memory_bytes:    number
+  complexity_estimate:  string
+  complexity_method:    string
+  complexity_confidence: number
+  sampled_lines:        number
+  skipped_lines:        number
+  line_sampling_rate:   number
+  memory_mode:          string
 }
 
-// ── Matches optilang/scoring.py ───────────────────────────────────────────────
-
-export interface ScoreBreakdown {
-  severity_penalty: number
-  complexity_penalty: number
-  performance_penalty: number
-  memory_penalty: number
-}
-
+// ── Scoring ───────────────────────────────────────────────────────────────────
 export interface DimensionScores {
-  correctness: number
+  correctness:           number
   efficiency_complexity: number
-  quality: number
-  maintainability: number
-  complexity_subscore: number
-  efficiency_subscore: number
-  profiling_partial: boolean
-  optimizer_partial: boolean
+  quality:               number
+  maintainability:       number
+  complexity_subscore:   number
+  efficiency_subscore:   number
+  profiling_partial:     boolean
+  optimizer_partial:     boolean
 }
 
 export interface ScoreReport {
-  score: number
-  grade: 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Critical'
+  score:            number
+  grade:            'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Critical'
   complexity_class: string
-  breakdown?: ScoreBreakdown      // optional — old backend
-  dimensions?: DimensionScores    // new backend
-  narrative?: string              // new backend
-  error_count?: number
-  lines_profiled?: number
-  cv?: number
-  max_execution_count?: number
-  baseline_time_ms?: number
+  dimensions:       DimensionScores
+  narrative:        string
+  error_count:      number
+  lines_profiled:   number
+  cv:               number
 }
 
-// ── Matches optilang/models.py ────────────────────────────────────────────────
-
+// ── Suggestions ───────────────────────────────────────────────────────────────
 export interface Suggestion {
-  line: number
-  pattern: string
-  severity: 'low' | 'medium' | 'high'
-  description: string
-  suggestion: string
+  line:         number
+  pattern:      string
+  severity:     'low' | 'medium' | 'high'
+  description:  string
+  suggestion:   string
   impact_score: number
 }
 
+// ── Execution result — matches /api/analyze response (AnalyzeResponse) ────────
+// The backend wraps interpreter-service's AnalyzeResponse and returns:
+// { success, output, errors, execution_time, profiling, symbol_table,
+//   suggestions, score_report, timestamp }
+// plus execution_time_ms added for convenience
 export interface ExecutionResult {
-  output: string
-  errors: string[]
-  execution_time: number        // seconds (from Python)
-  execution_time_ms: number     // converted to ms by the server
-  profiling: ProfilingData | null
-  symbol_table: Record<string, unknown>
-  score: ScoreReport | null
-  suggestions: Suggestion[]
+  success:           boolean
+  output:            string
+  errors:            string[]
+  execution_time:    number          // seconds
+  execution_time_ms: number          // ms (added by backend service)
+  profiling:         ProfilingData | null
+  symbol_table:      Record<string, unknown>
+  suggestions:       Suggestion[]
+  // score_report from interpreter, also surfaced as score for backward compat
+  score_report?:     ScoreReport
+  score?:            ScoreReport     // backward compat with old server.py
+  timestamp:         string
 }
 
 // ── API wrapper ───────────────────────────────────────────────────────────────
-
 export interface ApiResponse<T> {
   success: boolean
   message: string
-  data: T | null
+  data:    T | null
 }
 
 export interface ExecuteRequest {
-  code: string
+  code:             string
   enable_profiling: boolean
-  timeout: number
+  timeout:          number
 }

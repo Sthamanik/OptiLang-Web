@@ -300,62 +300,61 @@ export const useStore = create<EditorStore>()(
       // Simple localStorage-based auth for demo
       // In production: call real API endpoints
       login: async (email, pass) => {
-        const users: { id:string; name:string; email:string; pass:string }[] =
-          JSON.parse(localStorage.getItem('optilang_users') ?? '[]')
-        const found = users.find(u => u.email === email && u.pass === pass)
-        if (!found) return false
-        const user: AppUser = { id: found.id, name: found.name, email: found.email }
-        // Load this user's saved history
-        const userHistory = JSON.parse(
-          localStorage.getItem(`optilang_history_${found.id}`) ?? '[]'
-        )
-        // Load this user's saved tabs (or start fresh)
-        const userTabs = JSON.parse(
-          localStorage.getItem(`optilang_tabs_${found.id}`) ?? 'null'
-        )
-        const freshTab: EditorTab = {
-          id: `tab-${Date.now()}`, name: 'main.pylite', code: '',
-          runName: null, hasBeenNamed: false,
+        try {
+          const { loginUser } = await import('@/services/api')
+          const res = await loginUser(email, pass)
+          if (!res.success || !res.data) return false
+          const u = res.data.user
+          const user: AppUser = { id: u._id, name: u.name, email: u.email }
+          // Load this user's saved tabs (or start fresh)
+          const userTabs = JSON.parse(
+            localStorage.getItem(`optilang_tabs_${u._id}`) ?? 'null'
+          )
+          const freshTab: EditorTab = {
+            id: `tab-${Date.now()}`, name: 'main.pylite', code: '',
+            runName: null, hasBeenNamed: false,
+          }
+          const tabs        = userTabs?.tabs        ?? [freshTab]
+          const activeTabId = userTabs?.activeTabId ?? freshTab.id
+          set({ user, guestRunCount: 0, authModalOpen: false,
+                history: [], tabs, activeTabId })
+          return true
+        } catch {
+          return false
         }
-        const tabs      = userTabs?.tabs      ?? [freshTab]
-        const activeTabId = userTabs?.activeTabId ?? freshTab.id
-        set({ user, guestRunCount: 0, authModalOpen: false,
-              history: userHistory, tabs, activeTabId })
-        return true
       },
 
       signup: async (name, email, pass) => {
-        const users: { id:string; name:string; email:string; pass:string }[] =
-          JSON.parse(localStorage.getItem('optilang_users') ?? '[]')
-        if (users.find(u => u.email === email)) return false
-        const newUser = { id: `u-${Date.now()}`, name, email, pass }
-        users.push(newUser)
-        localStorage.setItem('optilang_users', JSON.stringify(users))
-        const user: AppUser = { id: newUser.id, name, email }
-        const freshTab: EditorTab = {
-          id: `tab-${Date.now()}`, name: 'main.pylite', code: '',
-          runName: null, hasBeenNamed: false,
+        try {
+          const { registerUser } = await import('@/services/api')
+          const res = await registerUser(name, email, pass)
+          if (!res.success || !res.data) return false
+          const u = res.data.user
+          const user: AppUser = { id: u._id, name: u.name, email: u.email }
+          const freshTab: EditorTab = {
+            id: `tab-${Date.now()}`, name: 'main.pylite', code: '',
+            runName: null, hasBeenNamed: false,
+          }
+          set({ user, guestRunCount: 0, authModalOpen: false,
+                history: [], tabs: [freshTab], activeTabId: freshTab.id })
+          return true
+        } catch {
+          return false
         }
-        set({ user, guestRunCount: 0, authModalOpen: false,
-              history: [], tabs: [freshTab], activeTabId: freshTab.id })
-        return true
       },
 
       logout: () => {
         const s = get()
+        // Save tabs to localStorage (offline cache)
         if (s.user) {
-          // Save history
-          localStorage.setItem(
-            `optilang_history_${s.user.id}`,
-            JSON.stringify(s.history)
-          )
-          // Save tabs
           localStorage.setItem(
             `optilang_tabs_${s.user.id}`,
             JSON.stringify({ tabs: s.tabs, activeTabId: s.activeTabId })
           )
         }
-        // Reset to a clean guest state
+        // Call backend to clear httpOnly cookie (fire-and-forget)
+        import('@/services/api').then(({ logoutUser }) => logoutUser()).catch(() => {})
+        // Reset to clean guest state immediately
         const guestTab: EditorTab = {
           id: `tab-${Date.now()}`, name: 'main.pylite', code: '',
           runName: null, hasBeenNamed: false,
