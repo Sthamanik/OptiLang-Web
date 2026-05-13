@@ -15,7 +15,6 @@ import AuthModal from '@/components/AuthModal'
 import { executeCode } from '@/services/api'
 import { useStore, applyTheme, type HistoryEntry, GUEST_MAX_RUNS, GUEST_FULL_RESULTS } from '@/store/useStore'
 import { formatCode } from '@/utils/formatter'
-import './App.css'
 
 type ResultTab = 'output' | 'profiling' | 'score'
 
@@ -62,7 +61,13 @@ export default function App() {
   // Cast score to ScoreReport so TypeScript is happy with both panels
   const typedScore = score as ScoreReport | null
 
-  useEffect(() => { applyTheme(theme) }, [])
+  useEffect(() => {
+    applyTheme(theme)
+    // sessionStorage-based Zustand persist handles auto-logout automatically:
+    // - Page refresh → sessionStorage survives → user stays logged in ✓
+    // - Tab close    → sessionStorage cleared  → user logged out next open ✓
+    // No manual beforeunload needed
+  }, [])
 
   // ── Run code ──────────────────────────────────────────────────────────────
   const runCode = useCallback(async (runName: string) => {
@@ -251,7 +256,7 @@ export default function App() {
             <div className="user-pill">
               <span className="user-avatar">{user.name[0].toUpperCase()}</span>
               <span className="user-name">{user.name.split(' ')[0]}</span>
-              <button className="user-logout" onClick={logout} title="Sign out">✕</button>
+              <button className="user-logout" onClick={logout} title="Logout">Logout</button>
             </div>
           ) : (
             <div className="guest-meter" title={`Guest: ${guestRunCount}/${GUEST_MAX_RUNS} runs used`}>
@@ -327,7 +332,7 @@ export default function App() {
       {apiError && (
         <div className="error-banner">
           ⚠ {apiError}
-          <button onClick={() => setApiError(null)}>✕</button>
+          <button onClick={() => setApiError(null)}>Logout</button>
         </div>
       )}
 

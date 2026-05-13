@@ -898,7 +898,7 @@ export default function LandingPage() {
           <span className="section-label">// Capabilities</span>
           <h2 className="section-title">Everything You Need<br/>to Understand Code</h2>
         </Reveal>
-        <Reveal delay={0.1} className="features-grid">
+        <Reveal delay={0.1} className="features-grid features-3col">
           {features.map(f => (
             <div key={f.name} className="feature-card">
               <div className="feature-icon">{f.icon}</div>
@@ -932,7 +932,7 @@ export default function LandingPage() {
       {/* FOOTER */}
       <footer>
         <div className="footer-logo">Opti<span>Lang</span></div>
-        <div className="footer-copy">© 2026 OptiLang · MIT License · v1.0.0 · Tribhuvan University, Nepal</div>
+        <div className="footer-copy">© 2026 OptiLang · MIT License · v1.0.0 · Nepal</div>
         <div className="footer-links">
           <a href="mailto:shresthamanik1820@gmail.com">Contact</a>
           <a href="https://github.com/Sthamanik/optilang" target="_blank" rel="noreferrer">GitHub</a>

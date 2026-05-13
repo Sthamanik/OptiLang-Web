@@ -34,7 +34,15 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Pro
     setErr('')
     if (!email.trim() || !pass.trim()) { setErr('All fields are required.'); return }
     if (tab === 'signup' && !name.trim()) { setErr('Name is required.'); return }
-    if (pass.length < 6) { setErr('Password must be at least 6 characters.'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setErr('Please enter a valid email address.'); return }
+    if (tab === 'signup') {
+      if (pass.length < 8) { setErr('Password must be at least 8 characters.'); return }
+      if (!/[A-Z]/.test(pass)) { setErr('Password must contain at least 1 uppercase letter.'); return }
+      const specials = (pass.match(/[!@#$%^&*()\-_=+;:,.<>?]/g) || []).length
+      if (specials < 2) { setErr('Password must contain at least 2 special characters (e.g. !@#).'); return }
+    } else {
+      if (pass.length < 6) { setErr('Password must be at least 6 characters.'); return }
+    }
 
     setLoading(true)
     try {
@@ -97,7 +105,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Pro
                 <input
                   className="auth-input"
                   type="text"
-                  placeholder="Manik Kumar Shrestha"
+                  placeholder="e.g. Arjun Thapa"
                   value={name}
                   onChange={e => setName(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleSubmit()}
@@ -115,7 +123,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Pro
                 ref={emailRef}
                 className="auth-input"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="e.g. arjun@gmail.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSubmit()}
@@ -131,7 +139,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = 'login' }: Pro
               <input
                 className="auth-input auth-input-pass"
                 type={show ? 'text' : 'password'}
-                placeholder="••••••••"
+                placeholder="Min 8 chars · 1 uppercase · 2 special (!@#)"
                 value={pass}
                 onChange={e => setPass(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSubmit()}

@@ -497,8 +497,14 @@ export const useStore = create<EditorStore>()(
     }),
     {
       name: 'optilang-storage',
+      // sessionStorage: survives page refresh BUT clears when tab/window closes
+      // This gives us: refresh = stay logged in, close tab = auto logout
+      storage: {
+        getItem:    (key) => sessionStorage.getItem(key),
+        setItem:    (key, val) => sessionStorage.setItem(key, val),
+        removeItem: (key) => sessionStorage.removeItem(key),
+      },
       partialize: (s) => ({
-        // Don't persist tabs/history globally — stored per-user in localStorage
         enableProfiling: s.enableProfiling,
         theme:           s.theme,
         sidebarOpen:     s.sidebarOpen,

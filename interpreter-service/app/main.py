@@ -4,6 +4,7 @@ from collections import deque
 from time import monotonic
 
 from fastapi import FastAPI, Request, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.routes import (
@@ -17,7 +18,6 @@ from app.api.routes import (
 )
 from app.core.config import settings
 
-# Configure logging
 logging.basicConfig(
     level=settings.log_level,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -30,12 +30,6 @@ DOCS_PATH_PREFIXES = ("/docs", "/redoc", "/openapi.json")
 
 
 def create_app() -> FastAPI:
-    """
-    Create and configure the FastAPI application.
-    
-    Returns:
-        Configured FastAPI application
-    """
     app = FastAPI(
         title=settings.app_name,
         version=settings.version,
@@ -46,6 +40,16 @@ def create_app() -> FastAPI:
         openapi_url="/openapi.json"
     )
 
+    # ── CORS — must be added BEFORE auth middleware ───────────────────────────
+    # Allows the browser (localhost:3000) to call localhost:8000
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:3000", "http://localhost:5173"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],   # allows X-Internal-Service-Secret
+    )
+
     app.state.request_timestamps = deque()
     app.state.rate_limit_lock = Lock()
     app.state.rate_limit_window_seconds = 60
@@ -53,6 +57,10 @@ def create_app() -> FastAPI:
     @app.middleware("http")
     async def protect_interpreter_service(request: Request, call_next):
         path = request.url.path
+
+        # Allow CORS preflight OPTIONS through without auth check
+        if request.method == "OPTIONS":
+            return await call_next(request)
 
         if path in UNPROTECTED_PATHS or path.startswith(DOCS_PATH_PREFIXES):
             return await call_next(request)
@@ -78,18 +86,12 @@ def create_app() -> FastAPI:
                 return JSONResponse(
                     status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                     headers={"Retry-After": str(retry_after)},
-                    content={
-                        "detail": (
-                            "Interpreter rate limit exceeded. "
-                            "Please retry shortly."
-                        )
-                    },
+                    content={"detail": "Interpreter rate limit exceeded. Please retry shortly."},
                 )
 
             timestamps.append(now)
         return await call_next(request)
-    
-    # Include routers
+
     app.include_router(analysis_router)
     app.include_router(execution_router)
     app.include_router(health_router)
@@ -97,28 +99,21 @@ def create_app() -> FastAPI:
     app.include_router(optimization_router)
     app.include_router(profile_router)
     app.include_router(score_router)
-    
+
     @app.on_event("startup")
     async def startup_event():
-        """Actions to perform on application startup."""
         logger.info(f"{settings.app_name} v{settings.version} starting up...")
         logger.info(f"Debug mode: {settings.debug}")
-        logger.info(
-            "Global interpreter rate limit: %s requests/minute",
-            settings.rate_limit_per_minute,
-        )
-    
+        logger.info("Global interpreter rate limit: %s requests/minute", settings.rate_limit_per_minute)
+
     @app.on_event("shutdown")
     async def shutdown_event():
-        """Actions to perform on application shutdown."""
         logger.info(f"{settings.app_name} shutting down...")
-    
+
     return app
 
 
-# Create app instance
 app = create_app()
-
 
 if __name__ == "__main__":
     import uvicorn
