@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import type { ExecutionResult, Suggestion, ProfilingData, ScoreReport } from '@/types'
 import type { Theme } from '@/components/ThemeSwitcher'
 
@@ -499,12 +499,8 @@ export const useStore = create<EditorStore>()(
       name: 'optilang-storage',
       // sessionStorage: survives page refresh BUT clears when tab/window closes
       // This gives us: refresh = stay logged in, close tab = auto logout
-      storage: {
-        getItem:    (key) => sessionStorage.getItem(key),
-        setItem:    (key, val) => sessionStorage.setItem(key, val),
-        removeItem: (key) => sessionStorage.removeItem(key),
-      },
-      partialize: (s) => ({
+      storage: createJSONStorage(() => sessionStorage),
+      partialize: (s): any => ({
         enableProfiling: s.enableProfiling,
         theme:           s.theme,
         sidebarOpen:     s.sidebarOpen,
